@@ -1,44 +1,30 @@
 const debug = require('debug')('of:release')
 const git = require('simple-git/promise')(process.cwd())
-const conventionalRecommendedBump = require(`conventional-recommended-bump`)
 const co = require('co')
 const execa = require('execa')
+const readPkg = require('read-pkg')
 const ns = {}
 
-const getConventionalRecommendedBump = preset =>
-	new Promise((resolve, reject) => {
-		conventionalRecommendedBump(
-			{
-				preset
-			},
-			function(err, result) {
-				if (err) return reject(err)
-				resolve(result.releaseType)
-			}
-		)
-	})
-
-ns.command = 'release <pre> [bump] [advanceBranch]'
+ns.command = 'release [pre] [bump] [advanceBranch]'
 ns.aliases = ['rel', 'r']
 ns.desc =
 	"Creates a Pre-release in 'develop' forks a branch matching release/semver. If executed on a pre-release branch will release a new update from that branch i.e. 2.0.0-beta.0 -> 2.0.0-beta.1"
 ns.builder = yargs => {
 	yargs.options({
 		advanceBranch: {
-			desc: 'Specifically increment a pre-release branch by name',
-			type: 'string'
+			desc: 'Specifically increment a pre-release branch by name'
 		},
 		bump: {
-			choices: ['major', 'minor', 'patch'],
+			choices: ['major', 'minor'],
 			desc:
-				'Force SemVer increment by type, omitting auto-increments based on changelog (angular format)',
-			type: 'string'
+				"Force SemVer increment by type, omitting auto-increments based on changelog (angular format). SemVer Patch is omitted as 'HotFix' should be used for them",
+			default: 'minor'
 		}
 	})
 	yargs.positional('pre', {
 		choices: ['alpha', 'beta', 'rc', 'next', 'official'],
 		desc:
-			'Optional pre-release type, if specified a pre-release will be pushed to github & npm. Ignored if on a pre-release branch',
+			"Optional pre-release type, if specified a pre-release will be pushed to github & npm. Ignored if on a pre-release branch. 'Official' is just a normal release branch",
 		default: 'official',
 		type: 'string'
 	})
@@ -86,23 +72,21 @@ ns.handler = argv => {
 			argv.pre = branchType
 		} else {
 			bump = argv.bump
-				? argv.bump
-				: yield getConventionalRecommendedBump('angular')
 			debug('bump', bump)
 
 			let tags = yield git.tags()
 			if (typeof tags.latest === 'undefined') {
 				//TODO retrieve tag from Package.json
+				const pkg = yield readPkg(process.cwd())
 				tags = {
-					latest: 'v0.0.1'
+					latest: pkg.version ? pkg.version : '0.0.1'
 				}
+				debug('tags', tags)
+				process.exit
 			}
 			bumpTag = tags.latest.split('.')
 			debug('bumpTag', bumpTag)
 			switch (bump) {
-				case 'patch':
-					bumpTag[2] = Number(bumpTag[2]) + 1
-					break
 				case 'minor':
 					bumpTag[1] = Number(bumpTag[1]) + 1
 					bumpTag[2] = 0
@@ -130,7 +114,6 @@ ns.handler = argv => {
 			} else if (argv.pre !== 'official') {
 				execArgs.push(bump)
 			}
-			//execArgs.push('--dry-run')
 			execArgs.push('--non-interactive')
 			switch (argv.pre) {
 				case 'alpha':
