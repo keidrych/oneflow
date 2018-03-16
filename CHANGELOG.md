@@ -1,3 +1,20 @@
+<a name="0.1.0"></a>
+# 0.1.0 (2018-03-16)
+
+
+### Bug Fixes
+
+* **start.release:** package.json scanning and default versioning ([30f78bc](https://github.com/TayloredTechnology/oneflow/commit/30f78bc))
+
+
+### Features
+
+* **start:** add hotfix support ([392f573](https://github.com/TayloredTechnology/oneflow/commit/392f573))
+* enable end & merge branches ([f2b379b](https://github.com/TayloredTechnology/oneflow/commit/f2b379b))
+* oneflow create feature & release ([54a4fbb](https://github.com/TayloredTechnology/oneflow/commit/54a4fbb))
+
+
+
 <a name="0.0.4-beta.0"></a>
 ## 0.0.4-beta.0 (2018-03-15)
 
