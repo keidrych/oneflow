@@ -3,7 +3,7 @@ const co = require('co')
 const ns = {}
 
 ns.command = 'start <type> <branch-name>'
-ns.aliases = ['new', 'begin']
+ns.aliases = ['new', 'begin', 'n']
 ns.desc =
 	"Create & Checkout a new branch of <type> from current 'develop' branch"
 ns.builder = yargs => {

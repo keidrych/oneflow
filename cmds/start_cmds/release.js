@@ -1,14 +1,15 @@
-const debug = require('debug')('of:release')
-const git = require('simple-git/promise')(process.cwd())
 const co = require('co')
+const debug = require('debug')('of:startRelease')
 const execa = require('execa')
+const git = require('simple-git/promise')(process.cwd())
 const readPkg = require('read-pkg')
+
 const ns = {}
 
 ns.command = 'release [pre] [bump] [advanceBranch]'
 ns.aliases = ['rel', 'r']
 ns.desc =
-	"Creates a Pre-release in 'develop' forks a branch matching release/semver. If executed on a pre-release branch will release a new update from that branch i.e. 2.0.0-beta.0 -> 2.0.0-beta.1"
+	"Creates a Pre-release in 'develop' forks a branch matching release/semver. Pre-release branches will convert to release branches when 'end' command issued. If executed on a pre-release branch will release a new update from that branch i.e. 2.0.0-beta.0 -> 2.0.0-beta.1"
 ns.builder = yargs => {
 	yargs.options({
 		advanceBranch: {
@@ -68,7 +69,13 @@ ns.handler = argv => {
 		if (branchType) {
 			argv.pre = branchType
 		} else {
-			bump = argv.bump
+			bump = yield global.getConventionalRecommendedBump('angular')
+			const bumpMinor = bump.match(/patch|minor/)
+			if (argv.bump) {
+				const argvMinor = argv.bump.match(/patch|minor/)
+				bump = argvMinor ? bumpMinor : argvMinor
+				bump = bump ? 'minor' : 'major'
+			}
 			debug('bump', bump)
 
 			let tags = yield git.tags()
