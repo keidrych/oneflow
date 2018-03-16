@@ -32,11 +32,8 @@ ns.builder = yargs => {
 ns.handler = argv => {
 	co(function*() {
 		const branches = yield git.branch()
-		if (
-			argv.advanceBranch &&
-			Object.keys(branches).includes(argv.advanceBranch)
-		) {
-			yield git.checkoutLocalBranch(argv.advanceBranch)
+		if (argv.advanceBranch && branches.all.includes(argv.advanceBranch)) {
+			yield git.checkout(argv.advanceBranch)
 		}
 
 		let branchType = branches.current.match(/alpha|beta|rc/)
@@ -76,13 +73,12 @@ ns.handler = argv => {
 
 			let tags = yield git.tags()
 			if (typeof tags.latest === 'undefined') {
-				//TODO retrieve tag from Package.json
 				const pkg = yield readPkg(process.cwd())
 				tags = {
 					latest: pkg.version ? pkg.version : '0.0.1'
 				}
 				debug('tags', tags)
-				process.exit
+				process.exit()
 			}
 			bumpTag = tags.latest.split('.')
 			debug('bumpTag', bumpTag)

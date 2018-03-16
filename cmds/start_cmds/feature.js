@@ -21,7 +21,7 @@ ns.handler = argv => {
 	co(function*() {
 		const branches = yield git.branch()
 		// create develop from master if doesn't exist in repo
-		if (!Object.keys(branches.branches).includes('develop')) {
+		if (!branches.all.includes('develop')) {
 			yield git.checkoutBranch('develop', 'master')
 			yield git.push('origin', 'develop')
 		}

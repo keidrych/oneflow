@@ -1,169 +1,47 @@
-const debug = require('debug')('of:release')
+const debug = require('debug')('of:hotfix')
 const git = require('simple-git/promise')(process.cwd())
-const conventionalRecommendedBump = require(`conventional-recommended-bump`)
 const co = require('co')
-const execa = require('execa')
 const ns = {}
 
-const getConventionalRecommendedBump = preset =>
-	new Promise((resolve, reject) => {
-		conventionalRecommendedBump(
-			{
-				preset
-			},
-			function(err, result) {
-				if (err) return reject(err)
-				resolve(result.releaseType)
-			}
-		)
-	})
-
-ns.command = 'release <pre> [bump] [advanceBranch]'
-ns.aliases = ['rel', 'r']
+ns.command = 'hotfix'
+ns.aliases = ['hot-fix', 'fix', 'h']
 ns.desc =
-	"Creates a Pre-release in 'develop' forks a branch matching release/semver. If executed on a pre-release branch will release a new update from that branch i.e. 2.0.0-beta.0 -> 2.0.0-beta.1"
-ns.builder = yargs => {
-	yargs.options({
-		advanceBranch: {
-			desc: 'Specifically increment a pre-release branch by name',
-			type: 'string'
-		},
-		bump: {
-			choices: ['major', 'minor', 'patch'],
-			desc:
-				'Force SemVer increment by type, omitting auto-increments based on changelog (angular format)',
-			type: 'string'
-		}
-	})
-	yargs.positional('pre', {
-		choices: ['alpha', 'beta', 'rc', 'next', 'official'],
-		desc:
-			'Optional pre-release type, if specified a pre-release will be pushed to github & npm. Ignored if on a pre-release branch',
-		default: 'official',
-		type: 'string'
-	})
-}
+	"Creates a 'HotFix' branch based on latest tag in 'master'. If 'HotFix' branch is already exists, will switch to it"
+ns.builder = yargs => {}
 ns.handler = argv => {
 	co(function*() {
 		const branches = yield git.branch()
-		if (
-			argv.advanceBranch &&
-			Object.keys(branches).includes(argv.advanceBranch)
-		) {
-			yield git.checkoutLocalBranch(argv.advanceBranch)
-		}
-
-		let branchType = branches.current.match(/alpha|beta|rc/)
-		branchType = branchType ? branchType[0] : false
-		if (!branches.current.includes('develop') && !branchType) {
-			log.error(
-				"Releases must start from 'develop' or a release branch if incrementing pre-release"
-			)
-			process.exit()
-		}
-
-		// ensure working directory is clean
-		const status = yield git.status()
-		const dirStatus = (({conflicted, created, deleted, modified, renamed}) => ({
-			conflicted,
-			created,
-			deleted,
-			modified,
-			renamed
-		}))(status)
-		const dirCheckOk = Object.keys(dirStatus).map(item => {
-			return dirStatus[item].length > 0
-		})
-		const dirOk = !dirCheckOk.includes(true)
-		if (!dirOk) {
-			log.error('Working Directory must be clean')
-			process.exit()
-		}
-
-		let bump
-		let bumpTag
-		if (branchType) {
-			argv.pre = branchType
-		} else {
-			bump = argv.bump
-				? argv.bump
-				: yield getConventionalRecommendedBump('angular')
-			debug('bump', bump)
-
-			let tags = yield git.tags()
-			if (typeof tags.latest === 'undefined') {
-				//TODO retrieve tag from Package.json
-				tags = {
-					latest: 'v0.0.1'
+		yield branches.all.map(
+			co.wrap(function*(branch) {
+				if (branch.match(/hotfix/) !== null) {
+					debug(branch)
+					yield git.checkout(branch)
+					process.exit()
 				}
-			}
-			bumpTag = tags.latest.split('.')
-			debug('bumpTag', bumpTag)
-			switch (bump) {
-				case 'patch':
-					bumpTag[2] = Number(bumpTag[2]) + 1
-					break
-				case 'minor':
-					bumpTag[1] = Number(bumpTag[1]) + 1
-					bumpTag[2] = 0
-					break
-				case 'major':
-					bumpTag[0] = bumpTag[0].startsWith('v')
-						? 'v' + (Number(bumpTag[0].replace(/^v/, '')) + 1)
-						: Number(bumpTag[0]) + 1
-					bumpTag[1] = 0
-					bumpTag[2] = 0
-					break
-				default:
-			}
-			bumpTag = bumpTag.join('.')
-			debug('bumpTag', bumpTag)
-		}
+				return true
+			})
+		)
 
-		debug('branchType', branchType)
-
+		yield git.checkout('master')
+		const tags = yield git.tags()
 		try {
-			debug('pre', argv.pre)
-			let execArgs = []
-			if (!branchType) {
-				execArgs.push(bumpTag)
-			} else if (argv.pre !== 'official') {
-				execArgs.push(bump)
-			}
-			//execArgs.push('--dry-run')
-			execArgs.push('--non-interactive')
-			switch (argv.pre) {
-				case 'alpha':
-				case 'beta':
-					execArgs.push('--preRelease=' + argv.pre)
-					break
-				case 'next':
-				case 'rc':
-					execArgs.push('--preRelease=' + argv.pre)
-					execArgs.push('--npm.tag=next')
-					break
-				case 'official':
-					execArgs.push('--github.draft')
-					execArgs.push('--no-npm.publish')
-					break
-				default:
-			}
-			const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
-			console.log(execVal)
+			tagLatest = yield git.raw(['describe', '--tags'])
 		} catch (err) {
-			log.error(err)
+			log.error('At least one release must have occurred prior to HotFix')
+			process.exit()
 		}
+		tagLatest = tagLatest.replace(/\n/, '')
 
-		if (!branchType) {
-			let branchName =
-				argv.pre !== 'official'
-					? 'release/' + bumpTag + '-' + argv.pre
-					: 'release/' + bumpTag
+		bumpTag = tagLatest.split('.')
+		debug('bumpTag', bumpTag)
+		bumpTag[2] = Number(bumpTag[2]) + 1
+		bumpTag = bumpTag.join('.')
+		debug('bumpTag', bumpTag)
 
-			yield git.checkoutBranch(branchName, 'develop')
-			yield git.push('origin', branchName)
-		}
-		yield git.pushTags('origin')
+		let branchName = 'hotfix/' + bumpTag
+
+		yield git.checkoutBranch(branchName, tagLatest)
+		yield git.push('origin', branchName)
 	}).catch(err => {
 		log.debug(err)
 	})
