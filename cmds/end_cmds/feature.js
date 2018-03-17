@@ -4,7 +4,7 @@ const co = require('co')
 const ns = {}
 
 ns.command = 'feature [branch-name]'
-ns.aliases = ['fc']
+ns.aliases = ['feat', 'f']
 ns.desc = 'Close feature branch'
 ns.builder = yargs => {
 	yargs.options({
@@ -17,16 +17,22 @@ ns.builder = yargs => {
 ns.handler = argv => {
 	co(function*() {
 		const branches = yield git.branch()
-		const isCurrent = branches.current.match(/feature/)
+		const isCurrent = branches.current.match(/feature/) !== null
+		debug('branch', branches.current)
+		debug('isCurrent', isCurrent)
 		let branch = argv['branch-name']
 		if (!isCurrent) {
-			branch = 'feature/' + branch
-			yield git.checkout(branch)
-		} else if ((typeof branch).includes('undefined')) {
-			log.error(
-				'Must either be on feature branch to close or specify branch name via --branch-name'
-			)
-			process.exit()
+			if (typeof branch !== 'undefined') {
+				branch = branch.includes('feature') ? branch : 'feature/' + branch
+				yield git.checkout(branch)
+			} else {
+				log.error(
+					'Must either be on feature branch to close or specify branch name via --branch-name'
+				)
+				process.exit()
+			}
+		} else {
+			branch = branches.current
 		}
 
 		// abort if commit is pending
@@ -47,7 +53,13 @@ ns.handler = argv => {
 			process.exit()
 		}
 
-		yield git.rebase(['-i', 'develop'])
+		try {
+			yield git.rebase(['develop'])
+		} catch (err) {
+			pico.error('Resolve Rebase Merge Conflict and re-run command')
+			pico.error(err)
+			process.exit()
+		}
 		yield git.checkout('develop')
 		yield git.merge(['--no-ff', branch])
 		yield git.push('origin', 'develop')

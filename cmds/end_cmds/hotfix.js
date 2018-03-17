@@ -6,9 +6,16 @@ const git = require('simple-git/promise')(process.cwd())
 const ns = {}
 
 ns.command = 'hotfix'
-ns.aliases = ['fix', 'h', 'hf']
+ns.aliases = ['hot-fix', 'fix', 'h']
 ns.desc = 'Close hotfix branch'
-ns.builder = yargs => {}
+ns.builder = yargs => {
+	yargs.options({
+		resume: {
+			desc: 'resume after a merge conflict',
+			type: 'boolean'
+		}
+	})
+}
 ns.handler = argv => {
 	co(function*() {
 		const branches = yield git.branch()
@@ -58,25 +65,32 @@ ns.handler = argv => {
 
 		debug('branchType', branchType)
 
-		yield git.tag(branch.replace('hotfix/'))
-		yield git.rebase(['-i', 'develop'])
-		yield git.checkout('develop')
-		yield git.merge(['--no-ff', branch])
+		if (!argv.resume) {
+			try {
+				const execArgs = [mergeTag, '--non-interactive']
+				const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
+				console.log(execVal)
+			} catch (err) {
+				log.error(err)
+			}
+			yield git.checkout('develop')
+		}
+
+		// --resume=true
+		try {
+			yield git.merge([branch])
+		} catch (err) {
+			log.error(
+				'Resolve Merge Conflict and run command again with --resume --branch-name ' +
+					branch
+			)
+			process.exit()
+		}
+		yield git.merge([branch])
+		yield git.pushTags('origin')
 		yield git.push('origin', 'develop')
 		yield git.deleteLocalBranch(branch)
 		yield git.push('origin', ':' + branch)
-
-		try {
-			const execArgs = [mergeTag, '--non-interactive']
-			const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
-			console.log(execVal)
-		} catch (err) {
-			log.error(err)
-		}
-
-		// TODO remove pre-hotfix assests if relevant
-		if (branchType) {
-		}
 
 		// fast-forwad master to latest hotfix tag
 		yield git.checkout('master')

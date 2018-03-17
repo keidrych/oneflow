@@ -6,13 +6,17 @@ const git = require('simple-git/promise')(process.cwd())
 const ns = {}
 
 ns.command = 'release [branch-name]'
-ns.aliases = ['r']
+ns.aliases = ['rel', 'r']
 ns.desc = 'Close release branch'
 ns.builder = yargs => {
 	yargs.options({
 		'branch-name': {
 			desc:
 				"<branch-name> is only necessary if executing this command against a different branch. If supplied only 'name' from 'release/name' is needed"
+		},
+		resume: {
+			desc: 'resume after a merge conflict',
+			type: 'boolean'
 		}
 	})
 }
@@ -73,26 +77,37 @@ ns.handler = argv => {
 			.match(/v*[0-9]+\.[0-9]+\.[0-9]+/)[0]
 
 		debug('branchType', branchType)
+		debug('argv.resume', argv.resume)
+		if (!argv.resume) {
+			try {
+				const execArgs = [mergeTag, '--non-interactive']
+				const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
+				console.log(execVal)
+			} catch (err) {
+				log.error(err)
+			}
 
-		yield git.tag(branch.replace('release/'))
-		yield git.rebase(['-i', 'develop'])
-		yield git.checkout('develop')
-		yield git.merge(['--no-ff', branch])
+			// TODO remove pre-release assests if relevant
+			if (branchType) {
+			}
+
+			yield git.checkout('develop')
+		}
+
+		// --resume=true
+		try {
+			yield git.merge([branch])
+		} catch (err) {
+			log.error(
+				'Resolve Merge Conflict and run command again with --resume --branch-name ' +
+					branch
+			)
+			process.exit()
+		}
+		yield git.pushTags('origin')
 		yield git.push('origin', 'develop')
 		yield git.deleteLocalBranch(branch)
 		yield git.push('origin', ':' + branch)
-
-		try {
-			const execArgs = [mergeTag, '--non-interactive']
-			const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
-			console.log(execVal)
-		} catch (err) {
-			log.error(err)
-		}
-
-		// TODO remove pre-release assests if relevant
-		if (branchType) {
-		}
 
 		// fast-forwad master to latest release tag
 		yield git.checkout('master')
