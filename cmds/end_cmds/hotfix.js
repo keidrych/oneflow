@@ -2,7 +2,6 @@ const co = require('co')
 const debug = require('debug')('of:endHotFix')
 const execa = require('execa')
 const git = require('simple-git/promise')(process.cwd())
-const ora = require('ora')
 
 const ns = {}
 
@@ -20,7 +19,7 @@ ns.builder = yargs => {
 ns.handler = argv => {
 	const sp = ora().start()
 	co(function*() {
-		sp.text = 'checking HotFix branch exists…'
+		sp.start('checking HotFix branch exists…')
 		const branches = yield git.branch()
 		const checkHotFix = yield branches.all.map(
 			co.wrap(function*(branch) {
@@ -39,29 +38,10 @@ ns.handler = argv => {
 		}
 		sp.succeed()
 
-		// fast-forwad master to latest hotfix tag
-		sp.text = 'ensure working directory is clean…'
-		const status = yield git.status()
-		const dirStatus = (({conflicted, created, deleted, modified, renamed}) => ({
-			conflicted,
-			created,
-			deleted,
-			modified,
-			renamed
-		}))(status)
-		const dirCheckOk = Object.keys(dirStatus).map(item => {
-			return dirStatus[item].length > 0
-		})
-		const dirOk = !dirCheckOk.includes(true)
-		if (!dirOk) {
-			sp.fail().stop()
-			log.error('Working Directory must be clean')
-			process.exit()
-		}
-		sp.succeed()
+		yield isCleanWorkDir(git)
 
 		let bump
-		sp.text = "checking release notes to ensure SemVer 'patch' bump only…"
+		sp.start("checking release notes to ensure SemVer 'patch' bump only…")
 		bump = yield global.getConventionalRecommendedBump('angular')
 		debug('bump', bump)
 		let mergeTag
@@ -82,10 +62,8 @@ ns.handler = argv => {
 
 		if (!argv.resume) {
 			try {
-				sp.text = 'releasing ' + branch + '…'
-				const execArgs = [mergeTag, '--non-interactive']
-				const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
-				console.log(execVal)
+				sp.start('releasing ' + branch + '…')
+				yield standardVersion({releaseAs: 'patch'})
 			} catch (err) {
 				sp.fail().stop()
 				log.error(err)
@@ -96,7 +74,7 @@ ns.handler = argv => {
 		}
 
 		// --resume=true
-		sp.text = 'merging ' + branch + ' into develop…'
+		sp.start('merging ' + branch + ' into develop…')
 		try {
 			yield git.merge([branch])
 		} catch (err) {
@@ -109,31 +87,31 @@ ns.handler = argv => {
 		}
 		sp.succeed()
 
-		sp.text = 'persisting tags remotely…'
+		sp.start('persisting tags remotely…')
 		yield git.pushTags('origin')
 		sp.succeed()
 
-		sp.text = 'deleting local branch…'
+		sp.start('deleting local branch…')
 		yield git.deleteLocalBranch(branch)
 		sp.succeed()
 
-		sp.text = 'deleting remote branch…'
+		sp.start('deleting remote branch…')
 		yield git.push('origin', ':' + branch)
 		sp.succeed()
 
-		sp.text = 'checking out master branch…'
+		sp.start('checking out master branch…')
 		yield git.checkout('master')
 		sp.succeed()
 
-		sp.text = 'merging master from ' + branch + '…'
+		sp.start('merging master from ' + branch + '…')
 		yield git.merge(['--ff-only', mergeTag])
 		sp.succeed()
 
-		sp.text = 'checking out develop branch…'
+		sp.start('checking out develop branch…')
 		yield git.checkout('develop')
 		sp.succeed()
 
-		sp.text = 'peristing all branch changes remotely…'
+		sp.start('peristing all branch changes remotely…')
 		yield git.raw(['push', '--all'])
 		sp.succeed().stop()
 	}).catch(err => {

@@ -1,17 +1,3 @@
-# Change Log
-
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
-
-<a name="0.4.1"></a>
-## [0.4.1](https://github.com/TayloredTechnology/oneflow/compare/v0.3.1...v0.4.1) (2018-03-17)
-
-
-
-<a name="0.3.1"></a>
-## [0.3.1](https://github.com/TayloredTechnology/oneflow/compare/0.3.0...0.3.1) (2018-03-17)
-
-
-
 <a name="0.3.0"></a>
 # [0.3.0](https://github.com/TayloredTechnology/oneflow/compare/0.2.0...0.3.0) (2018-03-17)
 
@@ -38,7 +24,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 <a name="0.1.0"></a>
-# 0.1.0 (2018-03-16)
+# [0.1.0](https://github.com/TayloredTechnology/oneflow/compare/54a4fbb...0.1.0) (2018-03-16)
 
 
 ### Bug Fixes
@@ -54,46 +40,3 @@ All notable changes to this project will be documented in this file. See [standa
 
 
 
-<a name="0.0.4-beta.0"></a>
-## 0.0.4-beta.0 (2018-03-15)
-
-
-
-<a name="0.0.4-beta.0"></a>
-## 0.0.4-beta.0 (2018-03-15)
-
-
-
-<a name="0.0.3"></a>
-## 0.0.3 (2018-03-15)
-
-
-
-<a name="0.0.2"></a>
-## 0.0.2 (2018-03-15)
-
-
-
-<a name="0.1.1"></a>
-## [0.1.1](https://github.com/TayloredTechnology/renovate-config/compare/0.1.0...0.1.1) (2018-03-15)
-
-
-### Bug Fixes
-
-* **rennovate:** prImmediately enabled as test null will never run ([7d3276a](https://github.com/TayloredTechnology/renovate-config/commit/7d3276a))
-
-
-
-<a name="0.1.0"></a>
-# 0.1.0 (2018-03-14)
-
-
-### Features
-
-* **renovate:** initial commit ([3bd85a9](https://github.com/TayloredTechnology/renovate-config/commit/3bd85a9))
-* **renovate:** initial commit ([77c1ee2](https://github.com/TayloredTechnology/renovate-config/commit/77c1ee2))
-
-
-
-<a name="0.0.1"></a>
-## 0.0.1 (2018-03-14)

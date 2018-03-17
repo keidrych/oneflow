@@ -44,25 +44,7 @@ ns.handler = argv => {
 		}
 		sp.succeed()
 
-		sp.text = 'ensure working directory is clean…'
-		const status = yield git.status()
-		const statusCheck = (({
-			conflicted,
-			created,
-			deleted,
-			modified,
-			renamed
-		}) => ({conflicted, created, deleted, modified, renamed}))(status)
-
-		const checkedStatus = Object.keys(statusCheck).map(
-			item => statusCheck[item].length > 0
-		)
-		if (checkedStatus.includes(true)) {
-			sp.fail().stop()
-			log.error('Pending Commit, process and re-run')
-			process.exit()
-		}
-		sp.succeed()
+		yield isCleanWorkDir(git)
 
 		sp.text = 'attempting to rebase ' + branch + ' from develop…'
 		try {

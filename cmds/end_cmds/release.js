@@ -2,7 +2,6 @@ const co = require('co')
 const debug = require('debug')('of:endRelease')
 const execa = require('execa')
 const git = require('simple-git/promise')(process.cwd())
-const ora = require('ora')
 
 const ns = {}
 
@@ -22,9 +21,8 @@ ns.builder = yargs => {
 	})
 }
 ns.handler = argv => {
-	const sp = ora().start()
 	co(function*() {
-		sp.text = 'checking release branch exists…'
+		sp.start('checking release branch exists…')
 		const branches = yield git.branch()
 		const isCurrent = branches.current.match(/release/)
 		let branch = argv['branch-name']
@@ -47,60 +45,20 @@ ns.handler = argv => {
 		let branchType = branches.current.match(/alpha|beta|rc/)
 		branchType = branchType ? branchType[0] : false
 
-		sp.text = 'ensure working directory is clean…'
-		const status = yield git.status()
-		const dirStatus = (({conflicted, created, deleted, modified, renamed}) => ({
-			conflicted,
-			created,
-			deleted,
-			modified,
-			renamed
-		}))(status)
-		const dirCheckOk = Object.keys(dirStatus).map(item => {
-			return dirStatus[item].length > 0
-		})
-		const dirOk = !dirCheckOk.includes(true)
-		if (!dirOk) {
-			sp.fail().stop()
-			log.error('Working Directory must be clean')
-			process.exit()
-		}
-		sp.succeed()
-
-		let bump
-		sp.text = 'promoting SemVer tag if necessary…'
-		bump = yield global.getConventionalRecommendedBump('angular')
-		debug('bump', bump)
-		let mergeTag = branch
-		if (bump.includes('major')) {
-			// migrate branch to next major version
-			mergeTag = mergeTag
-				.replace('release/', '')
-				.match(/v*[0-9]+\.[0-9]+\.[0-9]+/)[0]
-				.split('.')
-			mergeTag[0] = Number(mergeTag[0]) + 1
-			mergeTag[1] = 0
-			mergeTag[2] = 0
-			mergeTag = 'release/' + mergeTag.join('.')
-		}
-		sp.succeed()
-		mergeTag = mergeTag
-			.replace('release/', '')
-			.match(/v*[0-9]+\.[0-9]+\.[0-9]+/)[0]
+		yield isCleanWorkDir(git)
 
 		debug('branchType', branchType)
 		debug('argv.resume', argv.resume)
 		debug('argv.gitonly', argv.gitonly)
 		if (!argv.resume) {
-			sp.text = 'releasing ' + mergeTag + '…'
+			sp.start('releasing ' + mergeTag + '…')
 			try {
 				const execArgs = [
 					mergeTag,
 					'--non-interactive',
 					argv.gitonly ? '--no-npm.publish' : ''
 				]
-				const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
-				console.log(execVal)
+				yield standardVersion()
 			} catch (err) {
 				sp.fail().stop()
 				log.error(err)
@@ -117,7 +75,7 @@ ns.handler = argv => {
 
 		// --resume=true
 		try {
-			sp.text = 'merging ' + branch + ' into develop…'
+			sp.start('merging ' + branch + ' into develop…')
 			yield git.merge([branch])
 		} catch (err) {
 			sp.fail().stop()
@@ -129,31 +87,31 @@ ns.handler = argv => {
 		}
 		sp.succeed()
 
-		sp.text = 'persisting tags remotely…'
+		sp.start('persisting tags remotely…')
 		yield git.pushTags('origin')
 		sp.succeed()
 
-		sp.text = 'deleting local branch…'
+		sp.start('deleting local branch…')
 		yield git.deleteLocalBranch(branch)
 		sp.succeed()
 
-		sp.text = 'deleting remote branch…'
+		sp.start('deleting remote branch…')
 		yield git.push('origin', ':' + branch)
 		sp.succeed()
 
-		sp.text = 'checking out master branch…'
+		sp.start('checking out master branch…')
 		yield git.checkout('master')
 		sp.succeed()
 
-		sp.text = 'merging master from ' + mergeTag + '…'
+		sp.start('merging master from ' + mergeTag + '…')
 		yield git.merge(['--ff-only', mergeTag])
 		sp.succeed()
 
-		sp.text = 'checking out develop branch…'
+		sp.start('checking out develop branch…')
 		yield git.checkout('develop')
 		sp.succeed()
 
-		sp.text = 'peristing all branch changes remotely…'
+		sp.start('peristing all branch changes remotely…')
 		yield git.raw(['push', '--all'])
 		sp.succeed().stop()
 	}).catch(err => {

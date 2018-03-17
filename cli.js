@@ -22,6 +22,42 @@ global.getConventionalRecommendedBump = preset =>
 		)
 	})
 
+const sv = require('standard-version')
+
+global.standardVersion = options =>
+	new Promise((resolve, reject) => {
+		sv({options}, function(err, result) {
+			if (err) return reject(err)
+			resolve(result)
+		})
+	})
+
+global.sp = require('ora')()
+
+const co = require('co')
+
+global.isCleanWorkDir = co.wrap(function*(git) {
+	global.sp.start('ensure working directory is clean…')
+	const status = yield git.status()
+	const dirStatus = (({conflicted, created, deleted, modified, renamed}) => ({
+		conflicted,
+		created,
+		deleted,
+		modified,
+		renamed
+	}))(status)
+	const dirCheckOk = Object.keys(dirStatus).map(item => {
+		return dirStatus[item].length > 0
+	})
+	const dirOk = !dirCheckOk.includes(true)
+	if (!dirOk) {
+		global.sp.fail().stop()
+		log.error('Working Directory must be clean')
+		process.exit()
+	}
+	global.sp.succeed()
+})
+
 require('yargs')
 	.commandDir('cmds')
 	.demandCommand()

@@ -1,7 +1,6 @@
 const co = require('co')
 const debug = require('debug')('of:hotfix')
 const git = require('simple-git/promise')(process.cwd())
-const ora = require('ora')
 const ns = {}
 
 ns.command = 'hotfix'
@@ -12,7 +11,7 @@ ns.builder = yargs => {}
 ns.handler = argv => {
 	const sp = ora().start()
 	co(function*() {
-		sp.text = "checking HotFix branch doesn't exist…"
+		sp.start("checking HotFix branch doesn't exist…")
 		const branches = yield git.branch()
 		yield branches.all.map(
 			co.wrap(function*(branch) {
@@ -27,11 +26,11 @@ ns.handler = argv => {
 			})
 		)
 
-		sp.text = 'checking out master'
+		sp.start('checking out master')
 		yield git.checkout('master')
 		sp.succeed()
 
-		sp.text = 'checking for prior release tag…'
+		sp.start('checking for prior release tag…')
 		const tags = yield git.tags()
 		try {
 			tagLatest = yield git.raw(['describe', '--tags'])
@@ -51,11 +50,11 @@ ns.handler = argv => {
 
 		let branchName = 'hotfix/' + bumpTag
 
-		sp.text = 'creating ' + branchName + '…'
+		sp.start('creating ' + branchName + '…')
 		yield git.checkoutBranch(branchName, tagLatest)
 		sp.succeed()
 
-		sp.text = 'syncing HotFix branch remotely…'
+		sp.start('syncing HotFix branch remotely…')
 		yield git.push(['-u', 'origin', branchName])
 		sp.succeed().stop()
 	}).catch(err => {

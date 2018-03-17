@@ -1,8 +1,9 @@
 {
   "name": "@tayloredtechnology/oneflow",
-  "description": "OneFlow (http://endoflineblog.com/oneflow-a-git-branching-model-and-workflow) shell wrappers with rebase + merge --no-ff @ variation devop + master",
+  "description":
+    "OneFlow (http://endoflineblog.com/oneflow-a-git-branching-model-and-workflow) shell wrappers with rebase + merge --no-ff @ variation devop + master",
   "homepage": "https://github.com/TayloredTechnology/oneflow#readme",
-  "version": "0.4.1",
+  "version": "0.3.0",
   "bin": {
     "of": "./cli.js",
     "oneflow": "./cli.js"
@@ -51,9 +52,7 @@
   },
   "license": "SEE LICENSE IN LICENSE",
   "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
+    "extends": ["@commitlint/config-conventional"]
   },
   "xo": {
     "globals": [],
