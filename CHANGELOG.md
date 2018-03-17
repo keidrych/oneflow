@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.4.1"></a>
+## [0.4.1](https://github.com/TayloredTechnology/oneflow/compare/v0.3.1...v0.4.1) (2018-03-17)
+
+
+
 <a name="0.3.1"></a>
 ## [0.3.1](https://github.com/TayloredTechnology/oneflow/compare/0.3.0...0.3.1) (2018-03-17)
 
