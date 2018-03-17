@@ -112,32 +112,31 @@ ns.handler = argv => {
 		try {
 			debug('pre', argv.pre)
 			let execArgs = []
-			if (!branchType) {
-				execArgs.push(bumpTag)
-			} else if (argv.pre !== 'official') {
+			if (!branchType && argv.pre !== 'official') {
 				execArgs.push(bump)
+				execArgs.push('--non-interactive')
+				switch (argv.pre) {
+					case 'alpha':
+					case 'beta':
+						execArgs.push('--preRelease=' + argv.pre)
+						break
+					case 'next':
+					case 'rc':
+						execArgs.push('--preRelease=' + argv.pre)
+						execArgs.push('--npm.tag=next')
+						break
+					case 'official':
+						execArgs.push('--github.draft')
+						execArgs.push('--no-npm.publish')
+						break
+					default:
+				}
+				const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
+				console.log(execVal)
 			}
-			execArgs.push('--non-interactive')
-			switch (argv.pre) {
-				case 'alpha':
-				case 'beta':
-					execArgs.push('--preRelease=' + argv.pre)
-					break
-				case 'next':
-				case 'rc':
-					execArgs.push('--preRelease=' + argv.pre)
-					execArgs.push('--npm.tag=next')
-					break
-				case 'official':
-					execArgs.push('--github.draft')
-					execArgs.push('--no-npm.publish')
-					break
-				default:
-			}
-			const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
-			console.log(execVal)
 		} catch (err) {
 			log.error(err)
+			process.exit()
 		}
 
 		if (!branchType) {
@@ -147,7 +146,7 @@ ns.handler = argv => {
 					: 'release/' + bumpTag
 
 			yield git.checkoutBranch(branchName, 'develop')
-			yield git.push('origin', branchName)
+			yield git.push(['-u', 'origin', branchName])
 		}
 		yield git.pushTags('origin')
 	}).catch(err => {

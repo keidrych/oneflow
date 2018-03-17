@@ -41,7 +41,7 @@ ns.handler = argv => {
 		let branchName = 'hotfix/' + bumpTag
 
 		yield git.checkoutBranch(branchName, tagLatest)
-		yield git.push('origin', branchName)
+		yield git.push(['-u', 'origin', branchName])
 	}).catch(err => {
 		log.debug(err)
 	})

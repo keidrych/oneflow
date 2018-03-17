@@ -3,7 +3,7 @@ const git = require('simple-git/promise')(process.cwd())
 const co = require('co')
 const ns = {}
 
-ns.command = 'feature [branch-name]'
+ns.command = 'feature [branch-name] [resume]'
 ns.aliases = ['feat', 'f']
 ns.desc = 'Close feature branch'
 ns.builder = yargs => {
@@ -11,6 +11,10 @@ ns.builder = yargs => {
 		'branch-name': {
 			desc:
 				"<branch-name> is only necessary if executing this command against a different branch. If supplied only 'name' from 'feature/name' is needed"
+		},
+		resume: {
+			desc: 'resume after a merge conflict',
+			type: 'boolean'
 		}
 	})
 }

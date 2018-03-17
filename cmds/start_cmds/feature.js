@@ -23,11 +23,11 @@ ns.handler = argv => {
 		// create develop from master if doesn't exist in repo
 		if (!branches.all.includes('develop')) {
 			yield git.checkoutBranch('develop', 'master')
-			yield git.push('origin', 'develop')
+			yield git.push('origin', 'develop', ['-u'])
 		}
 
 		yield git.checkoutBranch(branch, 'develop')
-		yield git.push('origin', branch)
+		yield git.push(['-u', 'origin', branchName])
 	})
 }
 

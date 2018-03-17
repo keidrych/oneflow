@@ -5,7 +5,7 @@ const git = require('simple-git/promise')(process.cwd())
 
 const ns = {}
 
-ns.command = 'release [branch-name]'
+ns.command = 'release [branch-name] [resume]'
 ns.aliases = ['rel', 'r']
 ns.desc = 'Close release branch'
 ns.builder = yargs => {
@@ -26,13 +26,17 @@ ns.handler = argv => {
 		const isCurrent = branches.current.match(/release/)
 		let branch = argv['branch-name']
 		if (!isCurrent) {
-			branch = 'release/' + branch
-			yield git.checkout(branch)
-		} else if ((typeof branch).includes('undefined')) {
-			log.error(
-				'Must either be on release branch to close or specify branch name via --branch-name'
-			)
-			process.exit()
+			if (typeof branch !== 'undefined') {
+				branch = branch.includes('release') ? branch : 'release/' + branch
+				yield git.checkout(branch)
+			} else {
+				log.error(
+					'Must either be on release branch to close or specify branch name via --branch-name'
+				)
+				process.exit()
+			}
+		} else {
+			branch = branches.current
 		}
 
 		let branchType = branches.current.match(/alpha|beta|rc/)
@@ -60,10 +64,10 @@ ns.handler = argv => {
 		let bumpTag
 		bump = yield global.getConventionalRecommendedBump('angular')
 		debug('bump', bump)
-		let mergeTag
+		let mergeTag = branch
 		if (bump.includes('major')) {
 			// migrate branch to next major version
-			mergeTag = branch
+			mergeTag = mergeTag
 				.replace('release/', '')
 				.match(/v*[0-9]+\.[0-9]+\.[0-9]+/)[0]
 				.split('.')
@@ -78,13 +82,19 @@ ns.handler = argv => {
 
 		debug('branchType', branchType)
 		debug('argv.resume', argv.resume)
+		debug('argv.gitonly', argv.gitonly)
 		if (!argv.resume) {
 			try {
-				const execArgs = [mergeTag, '--non-interactive']
+				const execArgs = [
+					mergeTag,
+					'--non-interactive',
+					argv.gitonly ? '--no-npm.publish' : ''
+				]
 				const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
 				console.log(execVal)
 			} catch (err) {
 				log.error(err)
+				process.exit()
 			}
 
 			// TODO remove pre-release assests if relevant
@@ -112,6 +122,7 @@ ns.handler = argv => {
 		// fast-forwad master to latest release tag
 		yield git.checkout('master')
 		yield git.merge(['--ff-only', mergeTag])
+		yield git.checkout('develop')
 	}).catch(err => {
 		log.debug(err)
 	})

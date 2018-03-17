@@ -72,6 +72,7 @@ ns.handler = argv => {
 				console.log(execVal)
 			} catch (err) {
 				log.error(err)
+				process.exit()
 			}
 			yield git.checkout('develop')
 		}
@@ -95,6 +96,7 @@ ns.handler = argv => {
 		// fast-forwad master to latest hotfix tag
 		yield git.checkout('master')
 		yield git.merge(['--ff-only', mergeTag])
+		yield git.checkout('develop')
 	}).catch(err => {
 		log.debug(err)
 	})

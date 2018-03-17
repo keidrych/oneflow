@@ -25,6 +25,5 @@ global.getConventionalRecommendedBump = preset =>
 require('yargs')
 	.commandDir('cmds')
 	.demandCommand()
-	.boolean('resume')
 	.help()
 	.strict().argv
