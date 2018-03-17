@@ -1,3 +1,13 @@
+<a name="0.2.0"></a>
+# [0.2.0](https://github.com/TayloredTechnology/oneflow/compare/0.1.0...0.2.0) (2018-03-17)
+
+
+### Features
+
+* **resume:** enable resume for closing after merge conflicts in branch ([11020ba](https://github.com/TayloredTechnology/oneflow/commit/11020ba))
+
+
+
 <a name="0.1.0"></a>
 # 0.1.0 (2018-03-16)
 
