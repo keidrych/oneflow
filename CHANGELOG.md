@@ -1,3 +1,18 @@
+<a name="0.3.0"></a>
+# [0.3.0](https://github.com/TayloredTechnology/oneflow/compare/0.2.0...0.3.0) (2018-03-17)
+
+
+### Bug Fixes
+
+* **release:** more reliable branch merging ([9df728d](https://github.com/TayloredTechnology/oneflow/commit/9df728d))
+
+
+### Features
+
+* ora spinner for better text output ([80a0e40](https://github.com/TayloredTechnology/oneflow/commit/80a0e40))
+
+
+
 <a name="0.2.0"></a>
 # [0.2.0](https://github.com/TayloredTechnology/oneflow/compare/0.1.0...0.2.0) (2018-03-17)
 
