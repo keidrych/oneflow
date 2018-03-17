@@ -2,6 +2,7 @@ const co = require('co')
 const debug = require('debug')('of:startRelease')
 const execa = require('execa')
 const git = require('simple-git/promise')(process.cwd())
+const ora = require('ora')
 const readPkg = require('read-pkg')
 
 const ns = {}
@@ -31,22 +32,26 @@ ns.builder = yargs => {
 	})
 }
 ns.handler = argv => {
+	const sp = ora().start()
 	co(function*() {
 		const branches = yield git.branch()
 		if (argv.advanceBranch && branches.all.includes(argv.advanceBranch)) {
 			yield git.checkout(argv.advanceBranch)
 		}
 
+		sp.text = 'checking correct branch checked out…'
 		let branchType = branches.current.match(/alpha|beta|rc/)
 		branchType = branchType ? branchType[0] : false
 		if (!branches.current.includes('develop') && !branchType) {
+			sp.fail().stop()
 			log.error(
 				"Releases must start from 'develop' or a release branch if incrementing pre-release"
 			)
 			process.exit()
 		}
+		sp.succeed()
 
-		// ensure working directory is clean
+		sp.text = 'ensure working directory is clean…'
 		const status = yield git.status()
 		const dirStatus = (({conflicted, created, deleted, modified, renamed}) => ({
 			conflicted,
@@ -60,15 +65,18 @@ ns.handler = argv => {
 		})
 		const dirOk = !dirCheckOk.includes(true)
 		if (!dirOk) {
+			sp.fail().stop()
 			log.error('Working Directory must be clean')
 			process.exit()
 		}
+		sp.succeed()
 
 		let bump
 		let bumpTag
 		if (branchType) {
 			argv.pre = branchType
 		} else {
+			sp.text = 'calculating SemVer bump type…'
 			bump = yield global.getConventionalRecommendedBump('angular')
 			const bumpMinor = bump.match(/patch|minor/)
 			if (argv.bump) {
@@ -85,7 +93,6 @@ ns.handler = argv => {
 					latest: pkg.version ? pkg.version : '0.0.1'
 				}
 				debug('tags', tags)
-				process.exit()
 			}
 			bumpTag = tags.latest.split('.')
 			debug('bumpTag', bumpTag)
@@ -105,6 +112,7 @@ ns.handler = argv => {
 			}
 			bumpTag = bumpTag.join('.')
 			debug('bumpTag', bumpTag)
+			sp.succeed()
 		}
 
 		debug('branchType', branchType)
@@ -131,10 +139,12 @@ ns.handler = argv => {
 						break
 					default:
 				}
-				const execVal = yield execa('./node_modules/.bin/release-it', execArgs)
-				console.log(execVal)
+				sp.text = 'creating pre-release of type ' + argv.pre + '…'
+				yield execa('./node_modules/.bin/release-it', execArgs)
+				sp.succeed()
 			}
 		} catch (err) {
+			sp.fail().stop()
 			log.error(err)
 			process.exit()
 		}
@@ -145,10 +155,17 @@ ns.handler = argv => {
 					? 'release/' + bumpTag + '-' + argv.pre
 					: 'release/' + bumpTag
 
+			sp.text = 'creating ' + branchName + '…'
 			yield git.checkoutBranch(branchName, 'develop')
+			sp.succeed()
+
+			sp.text = 'persisting branch remotely…'
 			yield git.push(['-u', 'origin', branchName])
+			sp.succeed()
 		}
+		sp.text = 'syncing tags remotely…'
 		yield git.pushTags('origin')
+		sp.succeed().stop()
 	}).catch(err => {
 		log.debug(err)
 	})

@@ -1,6 +1,7 @@
 const debug = require('debug')('of:feature')
 const git = require('simple-git/promise')(process.cwd())
 const co = require('co')
+const ora = require('ora')
 const ns = {}
 
 ns.command = 'feature [branch-name] [resume]'
@@ -19,7 +20,9 @@ ns.builder = yargs => {
 	})
 }
 ns.handler = argv => {
+	const sp = ora().start()
 	co(function*() {
+		sp.text = 'checking correct branch checked out…'
 		const branches = yield git.branch()
 		const isCurrent = branches.current.match(/feature/) !== null
 		debug('branch', branches.current)
@@ -30,6 +33,7 @@ ns.handler = argv => {
 				branch = branch.includes('feature') ? branch : 'feature/' + branch
 				yield git.checkout(branch)
 			} else {
+				sp.fail().stop()
 				log.error(
 					'Must either be on feature branch to close or specify branch name via --branch-name'
 				)
@@ -38,8 +42,9 @@ ns.handler = argv => {
 		} else {
 			branch = branches.current
 		}
+		sp.succeed()
 
-		// abort if commit is pending
+		sp.text = 'ensure working directory is clean…'
 		const status = yield git.status()
 		const statusCheck = (({
 			conflicted,
@@ -53,22 +58,41 @@ ns.handler = argv => {
 			item => statusCheck[item].length > 0
 		)
 		if (checkedStatus.includes(true)) {
+			sp.fail().stop()
 			log.error('Pending Commit, process and re-run')
 			process.exit()
 		}
+		sp.succeed()
 
+		sp.text = 'attempting to rebase ' + branch + ' from develop…'
 		try {
 			yield git.rebase(['develop'])
 		} catch (err) {
-			pico.error('Resolve Rebase Merge Conflict and re-run command')
-			pico.error(err)
+			sp.fail().stop()
+			log.error('Resolve Rebase Merge Conflict and re-run command')
+			log.error(err)
 			process.exit()
 		}
+		sp.succeed()
+
+		sp.text = 'checking out develop…'
 		yield git.checkout('develop')
+		sp.succeed()
+
+		sp.text = 'merging ' + branch + ' into develop…'
 		yield git.merge(['--no-ff', branch])
-		yield git.push('origin', 'develop')
+		sp.succeed()
+
+		sp.text = 'deleting local branch…'
 		yield git.deleteLocalBranch(branch)
+		sp.succeed()
+
+		sp.text = 'deleting remote branch…'
 		yield git.push('origin', ':' + branch)
+
+		sp.text = 'persisting develop remotely'
+		yield git.push('origin', 'develop')
+		sp.succeed().stop()
 	})
 }
 
