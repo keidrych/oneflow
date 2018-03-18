@@ -55,7 +55,7 @@ ns.handler = argv => {
 			sp.start('releasing on GitHub…')
 			try {
 				debug('standard-version', yield execa('standard-version'))
-				yield conventionalGitHubReleaser()
+				yield conventionalGitHubReleaser(argv)
 			} catch (err) {
 				sp.fail().stop()
 				log.error(err)

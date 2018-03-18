@@ -80,9 +80,8 @@ ns.handler = argv => {
 		try {
 			sp.start('creating GitHub pre-release of type ' + argv.pre + '…')
 			debug('standard-version', yield execa('standard-version', svArgs))
-			yield conventionalGitHubReleaser(draftRelease)
+			yield conventionalGitHubReleaser(argv, draftRelease)
 			sp.succeed()
-			process.exit()
 		} catch (err) {
 			sp.fail().stop()
 			log.error(err)
@@ -90,7 +89,7 @@ ns.handler = argv => {
 		}
 
 		const pkg = yield readPkg(process.cwd())
-		if (args.pre !== 'official') {
+		if (argv.pre !== 'official' && !argv.gitonly) {
 			try {
 				sp.start('creating NPM pre-release of type ' + argv.pre + '…')
 				yield execa('npm', npArgs)

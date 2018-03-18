@@ -64,7 +64,7 @@ ns.handler = argv => {
 					'standard-version',
 					yield execa('standard-version', ['--releaseAs=patch'])
 				)
-				yield conventionalGitHubReleaser()
+				yield conventionalGitHubReleaser(argv)
 			} catch (err) {
 				sp.fail().stop()
 				log.error(err)

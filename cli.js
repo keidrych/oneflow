@@ -50,7 +50,7 @@ global.isCleanWorkDir = co.wrap(function*(git) {
 
 const cgh = require('conventional-github-releaser')
 
-global.conventionalGitHubReleaser = (isDraft = false) =>
+global.conventionalGitHubReleaser = (argv, isDraft = false) =>
 	new Promise((resolve, reject) => {
 		cgh(
 			{type: 'oauth', token: argv.token, url: argv.url},
