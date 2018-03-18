@@ -9,7 +9,6 @@ ns.desc =
 	"Creates a 'HotFix' branch based on latest tag in 'master'. If 'HotFix' branch is already exists, will switch to it"
 ns.builder = yargs => {}
 ns.handler = argv => {
-	const sp = ora().start()
 	co(function*() {
 		sp.start("checking HotFix branch doesn't exist…")
 		const branches = yield git.branch()

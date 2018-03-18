@@ -19,14 +19,15 @@ ns.builder = yargs => {
 	})
 }
 ns.handler = argv => {
-	const sp = ora().start()
 	co(function*() {
 		sp.start('checking HotFix branch exists…')
 		const branches = yield git.branch()
+		let hotfixBranch
 		const checkHotFix = yield branches.all.map(
 			co.wrap(function*(branch) {
-				if (branch.match(/hotfix/) !== null) {
+				if (branch.startsWith('hotfix')) {
 					debug(branch)
+					hotfixBranch = branch
 					yield git.checkout(branch)
 					return true
 				}
@@ -55,8 +56,6 @@ ns.handler = argv => {
 			// migrate branch to next major version
 		}
 		sp.succeed()
-
-		debug('branchType', branchType)
 
 		if (!argv.resume) {
 			try {
@@ -89,13 +88,14 @@ ns.handler = argv => {
 
 		// --resume=true
 		if (!pkg) pkg = yield readPkg(process.cwd())
+		const tag = 'v' + tag
 		sp.start('checking out develop…')
 		yield git.checkout('develop')
 		sp.succeed()
 
 		sp.start('merging ' + branch + ' into develop…')
 		try {
-			yield git.mergeFromTo(pkg.version, 'develop')
+			yield git.mergeFromTo(tag, 'develop')
 		} catch (err) {
 			sp.fail().stop()
 			log.error(
@@ -111,19 +111,19 @@ ns.handler = argv => {
 		sp.succeed()
 
 		sp.start('deleting local branch…')
-		yield git.raw(['branch', '-D', branch])
+		yield git.raw(['branch', '-D', hotfixBranch])
 		sp.succeed()
 
 		sp.start('deleting remote branch…')
-		yield git.push('origin', ':' + branch)
+		yield git.push('origin', ':' + hotfixBranch)
 		sp.succeed()
 
 		sp.start('checking out master branch…')
 		yield git.checkout('master')
 		sp.succeed()
 
-		sp.start('merging master from ' + branch + '…')
-		yield git.merge(['--ff-only', pkg.version])
+		sp.start('merging master from ' + tag + '…')
+		yield git.merge(['--ff-only', tag])
 		sp.succeed()
 
 		sp.start('checking out develop branch…')
