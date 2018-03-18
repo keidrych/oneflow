@@ -2,7 +2,7 @@ const co = require('co')
 const debug = require('debug')('of:endRelease')
 const execa = require('execa')
 const git = require('simple-git/promise')(process.cwd())
-const readPkg = require('read-package')
+const readPkg = require('read-pkg')
 
 const ns = {}
 let pkg
@@ -83,6 +83,7 @@ ns.handler = argv => {
 		}
 
 		if (!pkg) pkg = yield readPkg(process.cwd())
+		const tag = 'v' + pkg.version
 		// --resume=true
 		sp.start('checking out develop…')
 		yield git.checkout('develop')
@@ -90,7 +91,7 @@ ns.handler = argv => {
 
 		try {
 			sp.start('merging ' + branch + ' into develop…')
-			yield git.mergeFromTo(pkg.version, 'develop')
+			yield git.mergeFromTo(tag, 'develop')
 		} catch (err) {
 			sp.fail().stop()
 			log.error(
@@ -117,8 +118,8 @@ ns.handler = argv => {
 		yield git.checkout('master')
 		sp.succeed()
 
-		sp.start('merging master from ' + pkg.version + '…')
-		yield git.merge(['--ff-only', pkg.version])
+		sp.start('merging master from ' + tag + '…')
+		yield git.merge(['--ff-only', tag])
 		sp.succeed()
 
 		sp.start('checking out develop branch…')

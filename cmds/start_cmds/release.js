@@ -106,11 +106,13 @@ ns.handler = argv => {
 				argv.pre !== 'official'
 					? pkg.version.replace(/\.[0-9]*$/, '')
 					: pkg.version
-			branchName = 'release/' + branchName
+			branchName = 'release/v' + branchName
+			const tag = 'v' + pkg.version
 			debug('branchName', branchName)
+			debug('tag', tag)
 
-			sp.start('creating ' + branchName + 'from tag ' + pkg.version + ' …')
-			yield git.checkoutBranch(branchName, pkg.version)
+			sp.start('creating ' + branchName + 'from tag ' + tag + ' …')
+			yield git.checkoutBranch(branchName, tag)
 			sp.succeed()
 
 			sp.start('persisting branch remotely…')
