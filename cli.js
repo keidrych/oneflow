@@ -58,8 +58,34 @@ global.isCleanWorkDir = co.wrap(function*(git) {
 	global.sp.succeed()
 })
 
+const cgh = require('conventional-github-releaser')
+
+global.conventionalGitHubReleaser = (isDraft = false) =>
+	new Promise((resolve, reject) => {
+		cgh(
+			{type: 'oauth', token: argv.token, url: argv.url},
+			{preset: 'angular', draft: isDraft},
+			function(err, result) {
+				if (err) return reject(err)
+				resolve(result)
+			}
+		)
+	})
+
 require('yargs')
 	.commandDir('cmds')
+	.env('GITHUB')
+	.options({
+		token: {
+			desc:
+				"for releasing, a token of scope 'repo' is needed. Environment Variable GITHUB_TOKEN can be used instead"
+		},
+		endpoint: {
+			desc:
+				'GitHub Enterprise Override API endpoint. Environment Variable GITHUB_ENDPOINT can be used instead.',
+			default: 'https://api.github.com'
+		}
+	})
 	.demandCommand()
 	.help()
 	.strict().argv

@@ -4,6 +4,7 @@ const execa = require('execa')
 const git = require('simple-git/promise')(process.cwd())
 
 const ns = {}
+let pkg
 
 ns.command = 'hotfix'
 ns.aliases = ['hot-fix', 'fix', 'h']
@@ -44,7 +45,6 @@ ns.handler = argv => {
 		sp.start("checking release notes to ensure SemVer 'patch' bump only…")
 		bump = yield global.getConventionalRecommendedBump('angular')
 		debug('bump', bump)
-		let mergeTag
 		if (bump.match(/major|minor/)) {
 			sp.fail().stop()
 			log.error(
@@ -54,29 +54,45 @@ ns.handler = argv => {
 			// migrate branch to next major version
 		}
 		sp.succeed()
-		mergeTag = mergeTag
-			.replace('hotfix/', '')
-			.match(/v*[0-9]+\.[0-9]+\.[0-9]+/)[0]
 
 		debug('branchType', branchType)
 
 		if (!argv.resume) {
 			try {
-				sp.start('releasing ' + branch + '…')
+				sp.start('releasing on GitHub…')
 				yield standardVersion({releaseAs: 'patch'})
+				yield conventionalGitHubReleaser()
 			} catch (err) {
 				sp.fail().stop()
 				log.error(err)
 				process.exit()
 			}
-			yield git.checkout('develop')
 			sp.succeed()
+
+			pkg = yield readPkg(process.cwd())
+			if (!argv.gitonly) {
+				try {
+					sp.start('releasing on NPM…')
+					yield execa('npm', ['publish', '--tag=latest'])
+					sp.succeed()
+					process.exit()
+				} catch (err) {
+					sp.fail().stop()
+					log.error(err)
+					process.exit()
+				}
+			}
 		}
 
 		// --resume=true
+		if (!pkg) pkg = yield readPkg(process.cwd())
+		sp.start('checking out develop…')
+		yield git.checkout('develop')
+		sp.succeed()
+
 		sp.start('merging ' + branch + ' into develop…')
 		try {
-			yield git.merge([branch])
+			yield git.mergeFromTo(pkg.version, 'develop')
 		} catch (err) {
 			sp.fail().stop()
 			log.error(
@@ -104,7 +120,7 @@ ns.handler = argv => {
 		sp.succeed()
 
 		sp.start('merging master from ' + branch + '…')
-		yield git.merge(['--ff-only', mergeTag])
+		yield git.merge(['--ff-only', pkg.version])
 		sp.succeed()
 
 		sp.start('checking out develop branch…')

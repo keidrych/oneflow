@@ -4,6 +4,7 @@ const execa = require('execa')
 const git = require('simple-git/promise')(process.cwd())
 
 const ns = {}
+let pkg
 
 ns.command = 'release [branch-name] [resume]'
 ns.aliases = ['rel', 'r']
@@ -51,14 +52,10 @@ ns.handler = argv => {
 		debug('argv.resume', argv.resume)
 		debug('argv.gitonly', argv.gitonly)
 		if (!argv.resume) {
-			sp.start('releasing ' + mergeTag + '…')
+			sp.start('releasing on GitHub…')
 			try {
-				const execArgs = [
-					mergeTag,
-					'--non-interactive',
-					argv.gitonly ? '--no-npm.publish' : ''
-				]
 				yield standardVersion()
+				yield conventionalGitHubReleaser()
 			} catch (err) {
 				sp.fail().stop()
 				log.error(err)
@@ -70,13 +67,30 @@ ns.handler = argv => {
 			if (branchType) {
 			}
 
-			yield git.checkout('develop')
+			pkg = yield readPkg(process.cwd())
+			if (!argv.gitonly) {
+				try {
+					sp.start('releasing on NPM…')
+					yield execa('npm', ['publish', '--tag=latest'])
+					sp.succeed()
+					process.exit()
+				} catch (err) {
+					sp.fail().stop()
+					log.error(err)
+					process.exit()
+				}
+			}
 		}
 
+		if (!pkg) pkg = yield readPkg(process.cwd())
 		// --resume=true
+		sp.start('checking out develop…')
+		yield git.checkout('develop')
+		sp.succeed()
+
 		try {
 			sp.start('merging ' + branch + ' into develop…')
-			yield git.merge([branch])
+			yield git.mergeFromTo(pkg.version, 'develop')
 		} catch (err) {
 			sp.fail().stop()
 			log.error(
@@ -103,8 +117,8 @@ ns.handler = argv => {
 		yield git.checkout('master')
 		sp.succeed()
 
-		sp.start('merging master from ' + mergeTag + '…')
-		yield git.merge(['--ff-only', mergeTag])
+		sp.start('merging master from ' + pkg.version + '…')
+		yield git.merge(['--ff-only', pkg.version])
 		sp.succeed()
 
 		sp.start('checking out develop branch…')

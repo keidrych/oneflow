@@ -55,30 +55,31 @@ ns.handler = argv => {
 			argv.pre = branchType
 		}
 
+		debug('pre', argv.pre)
+		let draftRelease = false
+		const svOptions = {}
+		if (argv.bump) svOptions['releaseAs'] = argv.bump
+		const npArgs = ['publish']
+		switch (argv.pre) {
+			case 'alpha':
+			case 'beta':
+				svOptions['prerelease'] = argv.pre
+				npArgs.push('--tag=' + argv.pre)
+				break
+			case 'next':
+			case 'rc':
+				svOptions['prerelease'] = argv.pre
+				npArgs.push('--tag=next')
+				break
+			case 'official':
+				draftRelease = true
+				break
+			default:
+		}
 		try {
-			debug('pre', argv.pre)
-			const svOptions = {}
-			if (argv.bump) {
-				svOptions['releaseAs'] = argv.bump
-			}
-			switch (argv.pre) {
-				case 'alpha':
-				case 'beta':
-					svOptions['prerelease'] = argv.pre
-					break
-				case 'next':
-				case 'rc':
-					svOptions['prerelease'] = argv.pre
-					//execArgs.push('--npm.tag=next')
-					break
-				case 'official':
-					//execArgs.push('--github.draft')
-					//execArgs.push('--no-npm.publish')
-					break
-				default:
-			}
-			sp.start('creating pre-release of type ' + argv.pre + '…')
+			sp.start('creating GitHub pre-release of type ' + argv.pre + '…')
 			yield standardVersion(svOptions)
+			yield conventionalGitHubReleaser(draftRelease)
 			sp.succeed()
 			process.exit()
 		} catch (err) {
@@ -87,8 +88,21 @@ ns.handler = argv => {
 			process.exit()
 		}
 
+		const pkg = yield readPkg(process.cwd())
+		if (args.pre !== 'official') {
+			try {
+				sp.start('creating NPM pre-release of type ' + argv.pre + '…')
+				yield execa('npm', npArgs)
+				sp.succeed()
+				process.exit()
+			} catch (err) {
+				sp.fail().stop()
+				log.error(err)
+				process.exit()
+			}
+		}
+
 		if (!branchType) {
-			const pkg = yield readPkg(process.cwd())
 			const branchName =
 				'release/' + (argv.pre !== 'official')
 					? pkg.version.replace(/\.[0-9]*$/, '')

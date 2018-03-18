@@ -48,7 +48,9 @@
   "scripts": {
     "commit": "commit",
     "commitmsg": "commitlint -e $GIT_PARAMS",
-    "release": "release-it"
+    "prerelease": "standard-version",
+    "release": "conventional-github-releaser",
+    "postrelease": "npm publish --tag=latest"
   },
   "license": "SEE LICENSE IN LICENSE",
   "commitlint": {
