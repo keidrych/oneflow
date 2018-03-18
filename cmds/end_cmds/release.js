@@ -2,6 +2,7 @@ const co = require('co')
 const debug = require('debug')('of:endRelease')
 const execa = require('execa')
 const git = require('simple-git/promise')(process.cwd())
+const readPkg = require('read-package')
 
 const ns = {}
 let pkg
@@ -73,7 +74,6 @@ ns.handler = argv => {
 					sp.start('releasing on NPM…')
 					yield execa('npm', ['publish', '--tag=latest'])
 					sp.succeed()
-					process.exit()
 				} catch (err) {
 					sp.fail().stop()
 					log.error(err)

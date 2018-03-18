@@ -64,12 +64,12 @@ ns.handler = argv => {
 		switch (argv.pre) {
 			case 'alpha':
 			case 'beta':
-				svArgs.push('prerelease=' + argv.pre)
+				svArgs.push('--prerelease=' + argv.pre)
 				npArgs.push('--tag=' + argv.pre)
 				break
 			case 'next':
 			case 'rc':
-				svArgs.push('prerelease=' + argv.pre)
+				svArgs.push('--prerelease=' + argv.pre)
 				npArgs.push('--tag=next')
 				break
 			case 'official':
@@ -94,7 +94,6 @@ ns.handler = argv => {
 				sp.start('creating NPM pre-release of type ' + argv.pre + '…')
 				yield execa('npm', npArgs)
 				sp.succeed()
-				process.exit()
 			} catch (err) {
 				sp.fail().stop()
 				log.error(err)
@@ -103,10 +102,11 @@ ns.handler = argv => {
 		}
 
 		if (!branchType) {
-			const branchName =
-				'release/' + (argv.pre !== 'official')
+			let branchName =
+				argv.pre !== 'official'
 					? pkg.version.replace(/\.[0-9]*$/, '')
 					: pkg.version
+			branchName = 'release/' + branchName
 			debug('branchName', branchName)
 
 			sp.start('creating ' + branchName + 'from tag ' + pkg.version + ' …')
