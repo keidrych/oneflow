@@ -1,7 +1,6 @@
 const debug = require('debug')('of:feature')
 const git = require('simple-git/promise')(process.cwd())
 const co = require('co')
-const ora = require('ora')
 const ns = {}
 
 ns.command = 'feature [branch-name] [resume]'
@@ -20,9 +19,8 @@ ns.builder = yargs => {
 	})
 }
 ns.handler = argv => {
-	const sp = ora().start()
 	co(function*() {
-		sp.text = 'checking correct branch checked out…'
+		sp.start('checking correct branch checked out…')
 		const branches = yield git.branch()
 		const isCurrent = branches.current.match(/feature/) !== null
 		debug('branch', branches.current)
@@ -46,7 +44,7 @@ ns.handler = argv => {
 
 		yield isCleanWorkDir(git)
 
-		sp.text = 'attempting to rebase ' + branch + ' from develop…'
+		sp.start('attempting to rebase ' + branch + ' from develop…')
 		try {
 			yield git.rebase(['develop'])
 		} catch (err) {
@@ -57,25 +55,25 @@ ns.handler = argv => {
 		}
 		sp.succeed()
 
-		sp.text = 'checking out develop…'
+		sp.start('checking out develop…')
 		yield git.checkout('develop')
 		sp.succeed()
 
-		sp.text = 'merging ' + branch + ' into develop…'
+		sp.start('merging ' + branch + ' into develop…')
 		yield git.merge(['--no-ff', branch])
 		sp.succeed()
 
-		sp.text = 'deleting local branch…'
-		yield git.deleteLocalBranch(branch)
+		sp.start('deleting local branch…')
+		yield git.raw(['branch', '-D', branch])
 		sp.succeed()
 
-		sp.text = 'deleting remote branch…'
+		sp.start('deleting remote branch…')
 		yield git.push('origin', ':' + branch)
 
-		sp.text = 'persisting develop remotely'
+		sp.start('persisting develop remotely')
 		yield git.push('origin', 'develop')
 		sp.succeed().stop()
-	})
+	}).catch(log.error)
 }
 
 module.exports = ns

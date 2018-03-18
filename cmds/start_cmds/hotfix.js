@@ -57,9 +57,7 @@ ns.handler = argv => {
 		sp.start('syncing HotFix branch remotely…')
 		yield git.push(['-u', 'origin', branchName])
 		sp.succeed().stop()
-	}).catch(err => {
-		log.debug(err)
-	})
+	}).catch(log.debug)
 }
 
 module.exports = ns

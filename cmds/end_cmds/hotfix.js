@@ -60,7 +60,10 @@ ns.handler = argv => {
 		if (!argv.resume) {
 			try {
 				sp.start('releasing on GitHub…')
-				yield standardVersion({releaseAs: 'patch'})
+				debug(
+					'standard-version',
+					yield execa('standard-version', ['--releaseAs=patch'])
+				)
 				yield conventionalGitHubReleaser()
 			} catch (err) {
 				sp.fail().stop()
@@ -108,7 +111,7 @@ ns.handler = argv => {
 		sp.succeed()
 
 		sp.start('deleting local branch…')
-		yield git.deleteLocalBranch(branch)
+		yield git.raw(['branch', '-D', branch])
 		sp.succeed()
 
 		sp.start('deleting remote branch…')
@@ -130,9 +133,7 @@ ns.handler = argv => {
 		sp.start('peristing all branch changes remotely…')
 		yield git.raw(['push', '--all'])
 		sp.succeed().stop()
-	}).catch(err => {
-		log.debug(err)
-	})
+	}).catch(log.debug)
 }
 
 module.exports = ns

@@ -22,16 +22,6 @@ global.getConventionalRecommendedBump = preset =>
 		)
 	})
 
-const sv = require('standard-version')
-
-global.standardVersion = options =>
-	new Promise((resolve, reject) => {
-		sv({options}, function(err, result) {
-			if (err) return reject(err)
-			resolve(result)
-		})
-	})
-
 global.sp = require('ora')()
 
 const co = require('co')

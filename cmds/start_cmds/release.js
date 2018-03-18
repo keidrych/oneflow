@@ -1,5 +1,6 @@
 const co = require('co')
 const debug = require('debug')('of:startRelease')
+const execa = require('execa')
 const git = require('simple-git/promise')(process.cwd())
 const readPkg = require('read-pkg')
 
@@ -57,18 +58,18 @@ ns.handler = argv => {
 
 		debug('pre', argv.pre)
 		let draftRelease = false
-		const svOptions = {}
-		if (argv.bump) svOptions['releaseAs'] = argv.bump
+		const svArgs = []
+		if (argv.bump) svArgs['releaseAs'] = argv.bump
 		const npArgs = ['publish']
 		switch (argv.pre) {
 			case 'alpha':
 			case 'beta':
-				svOptions['prerelease'] = argv.pre
+				svArgs.push('prerelease=' + argv.pre)
 				npArgs.push('--tag=' + argv.pre)
 				break
 			case 'next':
 			case 'rc':
-				svOptions['prerelease'] = argv.pre
+				svArgs.push('prerelease=' + argv.pre)
 				npArgs.push('--tag=next')
 				break
 			case 'official':
@@ -78,7 +79,7 @@ ns.handler = argv => {
 		}
 		try {
 			sp.start('creating GitHub pre-release of type ' + argv.pre + '…')
-			yield standardVersion(svOptions)
+			debug('standard-version', yield execa('standard-version', svArgs))
 			yield conventionalGitHubReleaser(draftRelease)
 			sp.succeed()
 			process.exit()
@@ -120,9 +121,7 @@ ns.handler = argv => {
 		sp.start('syncing tags remotely…')
 		yield git.pushTags('origin')
 		sp.succeed().stop()
-	}).catch(err => {
-		log.debug(err)
-	})
+	}).catch(log.debug)
 }
 
 module.exports = ns

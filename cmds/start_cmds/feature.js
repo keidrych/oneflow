@@ -33,9 +33,9 @@ ns.handler = argv => {
 		sp.succeed()
 
 		sp.start('persisting branch remotely')
-		yield git.push(['-u', 'origin', branchName])
+		yield git.push(['-u', 'origin', branch])
 		sp.succeed().stop()
-	})
+	}).catch(log.error)
 }
 
 module.exports = ns
