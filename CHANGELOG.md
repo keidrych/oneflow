@@ -1,3 +1,18 @@
+# Change Log
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+<a name="0.4.0"></a>
+# [0.4.0](https://github.com/TayloredTechnology/oneflow/compare/0.3.0...0.4.0) (2018-03-18)
+
+
+### Features
+
+* **npm:** re-enable npm publishing ([7b5ce49](https://github.com/TayloredTechnology/oneflow/commit/7b5ce49))
+* **refactor:** stabilize release process with alt libraries ([473815a](https://github.com/TayloredTechnology/oneflow/commit/473815a))
+
+
+
 <a name="0.3.0"></a>
 # [0.3.0](https://github.com/TayloredTechnology/oneflow/compare/0.2.0...0.3.0) (2018-03-17)
 
@@ -37,6 +52,3 @@
 * **start:** add hotfix support ([392f573](https://github.com/TayloredTechnology/oneflow/commit/392f573))
 * enable end & merge branches ([f2b379b](https://github.com/TayloredTechnology/oneflow/commit/f2b379b))
 * oneflow create feature & release ([54a4fbb](https://github.com/TayloredTechnology/oneflow/commit/54a4fbb))
-
-
-
