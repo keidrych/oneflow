@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.6.3"></a>
+## [0.6.3](https://github.com/TayloredTechnology/oneflow/compare/v0.6.2...v0.6.3) (2018-03-19)
+
+
+### Bug Fixes
+
+* **documentation:** add the initial README ([26c9f5a](https://github.com/TayloredTechnology/oneflow/commit/26c9f5a))
+
+
+
 <a name="0.6.2"></a>
 ## [0.6.2](https://github.com/TayloredTechnology/oneflow/compare/v0.6.1...v0.6.2) (2018-03-19)
 
