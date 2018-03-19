@@ -5,7 +5,6 @@ const git = require('simple-git/promise')(process.cwd())
 const readPkg = require('read-pkg')
 
 const ns = {}
-let pkg
 
 ns.command = 'release [branch-name] [resume]'
 ns.aliases = ['rel', 'r']
@@ -52,37 +51,9 @@ ns.handler = argv => {
 		debug('branchType', branchType)
 		debug('argv.resume', argv.resume)
 		debug('argv.gitonly', argv.gitonly)
-		if (!argv.resume) {
-			sp.start('releasing on GitHub…')
-			try {
-				debug('standard-version', yield execa('standard-version'))
-				yield conventionalGitHubReleaser(argv)
-			} catch (err) {
-				sp.fail().stop()
-				log.error(err)
-				process.exit()
-			}
-			sp.succeed()
+		if (!argv.resume) debug('standard-version', yield execa('standard-version'))
 
-			// TODO remove pre-release assests if relevant
-			if (branchType) {
-			}
-
-			pkg = yield readPkg(process.cwd())
-			if (!argv.gitonly) {
-				try {
-					sp.start('releasing on NPM…')
-					yield execa('npm', ['publish', '--tag=latest'])
-					sp.succeed()
-				} catch (err) {
-					sp.fail().stop()
-					log.error(err)
-					process.exit()
-				}
-			}
-		}
-
-		if (!pkg) pkg = yield readPkg(process.cwd())
+		const pkg = yield readPkg(process.cwd())
 		const tag = 'v' + pkg.version
 		// --resume=true
 		sp.start('checking out develop…')
@@ -101,6 +72,32 @@ ns.handler = argv => {
 			process.exit()
 		}
 		sp.succeed()
+
+		sp.start('releasing on GitHub…')
+		try {
+			yield conventionalGitHubReleaser(argv)
+		} catch (err) {
+			sp.fail().stop()
+			log.error(err)
+			process.exit()
+		}
+		sp.succeed()
+
+		// TODO remove pre-release assests if relevant
+		if (branchType) {
+		}
+
+		sp.start('releasing on NPM…')
+		if (!argv.gitonly) {
+			try {
+				yield execa('npm', ['publish', '--tag=latest'])
+			} catch (err) {
+				sp.fail().stop()
+				log.error(err)
+				process.exit()
+			}
+			sp.succeed()
+		}
 
 		sp.start('deleting local branch…')
 		yield git.raw(['branch', '-D', branch])
@@ -122,8 +119,8 @@ ns.handler = argv => {
 		yield git.checkout('develop')
 		sp.succeed()
 
-		sp.start('peristing all branch changes remotely…')
-		yield git.raw(['push', '--all'])
+		sp.start('peristing develop branch changes remotely…')
+		yield git.push('origin', 'develop')
 		sp.succeed().stop()
 	}).catch(log.debug)
 }
