@@ -5,7 +5,6 @@ const git = require('simple-git/promise')(process.cwd())
 const readPkg = require('read-pkg')
 
 const ns = {}
-let pkg
 
 ns.command = 'hotfix'
 ns.aliases = ['hot-fix', 'fix', 'h']
@@ -58,57 +57,55 @@ ns.handler = argv => {
 		sp.succeed()
 
 		if (!argv.resume) {
-			try {
-				sp.start('releasing on GitHub…')
-				debug(
-					'standard-version',
-					yield execa('standard-version', ['--releaseAs=patch'])
-				)
-				yield conventionalGitHubReleaser(argv)
-			} catch (err) {
-				sp.fail().stop()
-				log.error(err)
-				process.exit()
-			}
-			sp.succeed()
-
-			pkg = yield readPkg(process.cwd())
-			if (!argv.gitonly) {
-				try {
-					sp.start('releasing on NPM…')
-					yield execa('npm', ['publish', '--tag=latest'])
-					sp.succeed()
-				} catch (err) {
-					sp.fail().stop()
-					log.error(err)
-					process.exit()
-				}
-			}
+			debug(
+				'standard-version',
+				yield execa('standard-version', ['--releaseAs=patch'])
+			)
 		}
 
 		// --resume=true
-		if (!pkg) pkg = yield readPkg(process.cwd())
-		const tag = 'v' + tag
+		const pkg = yield readPkg(process.cwd())
+		const tag = 'v' + pkg.version
 		sp.start('checking out develop…')
 		yield git.checkout('develop')
 		sp.succeed()
 
-		sp.start('merging ' + branch + ' into develop…')
+		sp.start('merging ' + hotfixBranch + ' into develop…')
 		try {
 			yield git.mergeFromTo(tag, 'develop')
 		} catch (err) {
 			sp.fail().stop()
 			log.error(
 				'Resolve Merge Conflict and run command again with --resume --branch-name ' +
-					branch
+					hotfixBranch
 			)
 			process.exit()
 		}
 		sp.succeed()
 
-		sp.start('persisting tags remotely…')
-		yield git.pushTags('origin')
+		try {
+			sp.start('releasing on GitHub…')
+			yield git.checkout(hotfixBranch)
+			yield conventionalGitHubReleaser(argv)
+			yield git.checkout('develop')
+		} catch (err) {
+			sp.fail().stop()
+			log.error(err)
+			process.exit()
+		}
 		sp.succeed()
+
+		if (!argv.gitonly) {
+			try {
+				sp.start('releasing on NPM…')
+				yield execa('npm', ['publish', '--tag=latest'])
+				sp.succeed()
+			} catch (err) {
+				sp.fail().stop()
+				log.error(err)
+				process.exit()
+			}
+		}
 
 		sp.start('deleting local branch…')
 		yield git.raw(['branch', '-D', hotfixBranch])

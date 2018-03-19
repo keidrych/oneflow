@@ -52,6 +52,8 @@ ns.handler = argv => {
 
 		yield isCleanWorkDir(git)
 
+		const pkgPre = yield readPkg(process.cwd())
+		const preBranch = 'release/v' + pkgPre.version
 		if (branchType) {
 			argv.pre = branchType
 		}
@@ -59,7 +61,7 @@ ns.handler = argv => {
 		debug('pre', argv.pre)
 		let draftRelease = false
 		const svArgs = []
-		if (argv.bump) svArgs['releaseAs'] = argv.bump
+		if (argv.bump) svArgs['--releaseAs'] = argv.bump
 		const npArgs = ['publish']
 		switch (argv.pre) {
 			case 'alpha':
@@ -77,18 +79,7 @@ ns.handler = argv => {
 				break
 			default:
 		}
-		try {
-			sp.start('creating GitHub pre-release of type ' + argv.pre + '…')
-			debug('standard-version', yield execa('standard-version', svArgs))
-			yield conventionalGitHubReleaser(argv, draftRelease)
-			sp.succeed()
-		} catch (err) {
-			sp.fail().stop()
-			log.error(err)
-			process.exit()
-		}
-
-		const pkg = yield readPkg(process.cwd())
+		debug('standard-version', yield execa('standard-version', svArgs))
 		if (argv.pre !== 'official' && !argv.gitonly) {
 			try {
 				sp.start('creating NPM pre-release of type ' + argv.pre + '…')
@@ -100,28 +91,42 @@ ns.handler = argv => {
 				process.exit()
 			}
 		}
-
-		if (!branchType) {
-			let branchName =
-				argv.pre !== 'official'
-					? pkg.version.replace(/\.[0-9]*$/, '')
-					: pkg.version
-			branchName = 'release/v' + branchName
-			const tag = 'v' + pkg.version
-			debug('branchName', branchName)
-			debug('tag', tag)
+		const pkg = yield readPkg(process.cwd())
+		const tag = 'v' + pkg.version
+		const branchName = 'release/' + tag
+		debug('branchName', branchName)
+		debug('tag', tag)
+		if (branchType) {
+			// rename branch to new release version and release: github-releaser prioritizes branch name for releases
+			debug('preBranch', preBranch)
+			sp.start('rename branch to new release version')
+			yield git.raw(['branch', '-m', branchName])
+			yield git.push('origin', ':' + preBranch)
+		} else {
+			//let branchName =
+			//	argv.pre !== 'official'
+			//		? pkg.version.replace(/\.[0-9]*$/, '')
+			//		: pkg.version
+			//branchName = 'release/v' + branchName
 
 			sp.start('creating ' + branchName + 'from tag ' + tag + ' …')
 			yield git.checkoutBranch(branchName, tag)
 			sp.succeed()
 
 			sp.start('persisting branch remotely…')
-			yield git.push(['-u', 'origin', branchName])
-			sp.succeed()
 		}
-		sp.start('syncing tags remotely…')
-		yield git.pushTags('origin')
-		sp.succeed().stop()
+		yield git.push(['-u', 'origin', branchName])
+		sp.succeed()
+		try {
+			sp.start('creating GitHub pre-release of type ' + argv.pre + '…')
+			// releasing to GitHub also pushes the tag so specific command as seen in OneFlow isn't necessary
+			yield conventionalGitHubReleaser(argv, draftRelease)
+			sp.succeed()
+		} catch (err) {
+			sp.fail().stop()
+			log.error(err)
+			process.exit()
+		}
 	}).catch(log.debug)
 }
 

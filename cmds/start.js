@@ -2,6 +2,12 @@ const debug = require('debug')('of:start')
 const co = require('co')
 const ns = {}
 
+process.on('unhandledRejection', (reason, p) => {
+	global.sp.stop()
+	log.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
+	process.exit()
+})
+
 ns.command = 'start <type> <branch-name> [gitonly]'
 ns.aliases = ['new', 'begin', 'n']
 ns.desc =

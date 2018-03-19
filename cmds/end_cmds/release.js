@@ -102,10 +102,6 @@ ns.handler = argv => {
 		}
 		sp.succeed()
 
-		sp.start('persisting tags remotely…')
-		yield git.pushTags('origin')
-		sp.succeed()
-
 		sp.start('deleting local branch…')
 		yield git.raw(['branch', '-D', branch])
 		sp.succeed()

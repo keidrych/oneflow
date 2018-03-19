@@ -24,7 +24,7 @@ ns.handler = argv => {
 		if (!branches.all.includes('develop')) {
 			sp.start("Develop doesn't exist, creating…")
 			yield git.checkoutBranch('develop', 'master')
-			yield git.push('origin', 'develop', ['-u'])
+			yield git.push(['-u', 'origin', 'develop'])
 			sp.succeed()
 		}
 

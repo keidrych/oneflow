@@ -62,6 +62,12 @@ global.conventionalGitHubReleaser = (argv, isDraft = false) =>
 		)
 	})
 
+process.on('unhandledRejection', (reason, p) => {
+	global.sp.stop()
+	log.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
+	process.exit()
+})
+
 require('yargs')
 	.commandDir('cmds')
 	.env('GITHUB')
