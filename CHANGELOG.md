@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.6.2"></a>
+## [0.6.2](https://github.com/TayloredTechnology/oneflow/compare/v0.6.1...v0.6.2) (2018-03-19)
+
+
+### Bug Fixes
+
+* **release:** ensure branch change happens before release comand ([5192c6a](https://github.com/TayloredTechnology/oneflow/commit/5192c6a))
+
+
+
 <a name="0.6.1"></a>
 ## [0.6.1](https://github.com/TayloredTechnology/oneflow/compare/v0.6.0...v0.6.1) (2018-03-19)
 
