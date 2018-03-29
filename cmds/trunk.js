@@ -28,7 +28,7 @@ ns.builder = yargs => {
 			},
 			'no-npm': {desc: 'Disable NPM Release', type: 'boolean'}
 		})
-		.boolean(['resume', 'no-release', 'github', 'npm'])
+		.boolean(['no-release', 'no-github', 'no-npm'])
 }
 ns.handler = function(argv) {}
 

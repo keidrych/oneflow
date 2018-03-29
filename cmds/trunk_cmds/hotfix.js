@@ -8,12 +8,14 @@ ns.command = 'hotfix'
 ns.aliases = ['hot-fix', 'fix', 'h']
 ns.desc = "Automanage HotFix branch, based on latest tag in 'master'"
 ns.builder = yargs => {
-	yargs.options({
-		resume: {
-			desc: 'resume after a merge conflict',
-			type: 'boolean'
-		}
-	})
+	yargs
+		.options({
+			resume: {
+				desc: 'resume after a merge conflict',
+				type: 'boolean'
+			}
+		})
+		.boolean('resume')
 }
 ns.handler = argv => {
 	co(function*() {

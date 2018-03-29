@@ -2,6 +2,7 @@ const co = require('co')
 const common = require('^lib/common')
 const debug = require('debug')('of:endRelease')
 const git = require('simple-git/promise')(process.cwd())
+const readPkg = require('read-pkg')
 
 const ns = {}
 
