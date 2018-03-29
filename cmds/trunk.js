@@ -1,4 +1,4 @@
-const debug = require('debug')('of:end')
+const debug = require('debug')('of:trunk')
 const co = require('co')
 require('rooty')()
 
@@ -10,13 +10,13 @@ process.on('unhandledRejection', (reason, p) => {
 	process.exit()
 })
 
-ns.command = 'end <type> [no-release] [no-github] [no-npm]'
-ns.aliases = ['stop', 'close', 'merge', 'c', 'e']
+ns.command = 'trunk <type> [no-release] [no-github] [no-npm]'
+ns.aliases = ['t']
 ns.desc =
-	'Merge & Delete a branch of <type> following Option#3 in OneFlow. Autovalidaes release number and increments if necessary'
+	'Trunk based development branch of GitFlow, releases cut from latest commit, hotfixes auto detect and close, features are assumed to be tracked via GIT commit logs'
 ns.builder = yargs => {
 	return yargs
-		.commandDir('end_cmds')
+		.commandDir('trunk_cmds')
 		.options({
 			'no-release': {
 				desc: "Don't Release to any publish endpoints",
