@@ -1,17 +1,15 @@
+const co = require('co')
+const common = require('^lib/common')
 const debug = require('debug')('of:feature')
 const git = require('simple-git/promise')(process.cwd())
-const co = require('co')
+
 const ns = {}
 
-ns.command = 'feature [branch-name] [resume]'
+ns.command = 'feature [resume]'
 ns.aliases = ['feat', 'f']
 ns.desc = 'Close feature branch'
 ns.builder = yargs => {
 	yargs.options({
-		'branch-name': {
-			desc:
-				"<branch-name> is only necessary if executing this command against a different branch. If supplied only 'name' from 'feature/name' is needed"
-		},
 		resume: {
 			desc: 'resume after a merge conflict',
 			type: 'boolean'
@@ -20,31 +18,21 @@ ns.builder = yargs => {
 }
 ns.handler = argv => {
 	co(function*() {
-		sp.start('checking correct branch checked out…')
-		const branches = yield git.branch()
-		const isCurrent = branches.current.match(/feature/) !== null
-		debug('branch', branches.current)
-		debug('isCurrent', isCurrent)
-		let branch = argv['branch-name']
-		if (!isCurrent) {
-			if (typeof branch !== 'undefined') {
-				branch = branch.includes('feature') ? branch : 'feature/' + branch
-				yield git.checkout(branch)
-			} else {
-				sp.fail().stop()
-				log.error(
-					'Must either be on feature branch to close or specify branch name via --branch-name'
+		const branchExists = yield common.searchCheckoutBranch('feature')
+
+		if (!branchExists && !argv.resume) {
+			sp
+				.start()
+				.fail(
+					"No Feature Branches Available… did you mean to run 'oneflow new feature <branch>'"
 				)
-				process.exit()
-			}
-		} else {
-			branch = branches.current
+				.stop()
+			process.exit()
 		}
-		sp.succeed()
 
 		yield isCleanWorkDir(git)
 
-		sp.start('attempting to rebase ' + branch + ' from develop…')
+		sp.start(`attempting to rebase ${branch} from develop…`)
 		try {
 			yield git.rebase(['develop'])
 		} catch (err) {

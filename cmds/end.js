@@ -1,5 +1,7 @@
 const debug = require('debug')('of:end')
 const co = require('co')
+require('rooty')()
+
 const ns = {}
 
 process.on('unhandledRejection', (reason, p) => {
@@ -16,9 +18,17 @@ ns.builder = yargs => {
 	return yargs
 		.commandDir('end_cmds')
 		.options({
-			gitonly: {desc: 'GitHub only Releases (No NPM)', type: 'boolean'}
+			'no-release': {
+				desc: "Don't Release to any publish endpoints",
+				type: 'boolean'
+			},
+			'no-github': {
+				desc: 'Disable GitHub Release',
+				type: 'boolean'
+			},
+			'no-npm': {desc: 'Disable NPM Release', type: 'boolean'}
 		})
-		.boolean(['resume', 'gitonly'])
+		.boolean(['resume', 'no-release', 'github', 'npm'])
 }
 ns.handler = function(argv) {}
 

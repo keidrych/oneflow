@@ -7,6 +7,7 @@ global.log = require('pino')(
 )
 pinoDebug(global.log, {auto: true, map: {'*': 'debug'}})
 
+// Global Functions
 const conventionalRecommendedBump = require(`conventional-recommended-bump`)
 
 global.getConventionalRecommendedBump = preset =>
@@ -78,12 +79,14 @@ global.conventionalGitHubReleaser = (argv, isDraft = false) =>
 		)
 	})
 
+// Catch Promises
 process.on('unhandledRejection', (reason, p) => {
 	global.sp.stop()
 	log.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
 	process.exit()
 })
 
+// Yargs CLI
 require('yargs')
 	.commandDir('cmds')
 	.env('GITHUB')

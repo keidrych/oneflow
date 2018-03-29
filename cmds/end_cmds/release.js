@@ -1,20 +1,15 @@
 const co = require('co')
 const debug = require('debug')('of:endRelease')
-const execa = require('execa')
 const git = require('simple-git/promise')(process.cwd())
 const readPkg = require('read-pkg')
 
 const ns = {}
 
-ns.command = 'release [branch-name] [resume]'
+ns.command = 'release [resume]'
 ns.aliases = ['rel', 'r']
 ns.desc = 'Close release branch'
 ns.builder = yargs => {
 	yargs.options({
-		'branch-name': {
-			desc:
-				"<branch-name> is only necessary if executing this command against a different branch. If supplied only 'name' from 'release/name' is needed"
-		},
 		resume: {
 			desc: 'resume after a merge conflict',
 			type: 'boolean'
@@ -23,55 +18,35 @@ ns.builder = yargs => {
 }
 ns.handler = argv => {
 	co(function*() {
-		sp.start('checking release branch exists…')
-		const branches = yield git.branch()
-		const isCurrent = branches.current.match(/release/)
-		let branch = argv['branch-name']
-		if (!isCurrent) {
-			if (typeof branch !== 'undefined') {
-				branch = branch.includes('release') ? branch : 'release/' + branch
-				yield git.checkout(branch)
-			} else {
-				sp.fail().stop()
-				log.error(
-					'Must either be on release branch to close or specify branch name via --branch-name'
-				)
-				process.exit()
-			}
-		} else {
-			branch = branches.current
-		}
-		sp.succeed()
+		const branchExists = yield common.searchCheckoutBranch('release')
 
-		let branchType = branches.current.match(/alpha|beta|rc/)
-		branchType = branchType ? branchType[0] : false
+		if (!branchExists && !argv.resume) {
+			sp
+				.start()
+				.fail(
+					"No Release Branches Available… did you mean to run 'oneflow new release'"
+				)
+				.stop()
+			process.exit()
+		}
 
 		yield isCleanWorkDir(git)
 
-		debug('branchType', branchType)
 		debug('argv.resume', argv.resume)
-		debug('argv.gitonly', argv.gitonly)
-		if (!argv.resume)
-			debug(
-				'standard-version',
-				yield execa('standard-version', [''], {localDir: yield installedPath()})
-			)
+		if (!argv.resume) yield common.standardVersion([''])
+
+		// --resume=true
+		yield common.checkoutBranch('develop')
+
 		const pkg = yield readPkg(process.cwd())
 		const tag = 'v' + pkg.version
-		// --resume=true
-		sp.start('checking out develop…')
-		yield git.checkout('develop')
-		sp.succeed()
 
 		try {
-			sp.start('merging ' + branch + ' into develop…')
+			sp.start(`merging ${tag} into develop…`)
 			yield git.mergeFromTo(tag, 'develop')
 		} catch (err) {
 			sp.fail().stop()
-			log.error(
-				'Resolve Merge Conflict and run command again with --resume --branch-name ' +
-					branch
-			)
+			log.error('Resolve Merge Conflict and run command again with --resume')
 			process.exit()
 		}
 		sp.succeed()
@@ -88,7 +63,7 @@ ns.handler = argv => {
 		yield git.checkout('master')
 		sp.succeed()
 
-		sp.start('merging master from ' + tag + '…')
+		sp.start(`merging master from ${tag} …`)
 		yield git.merge(['--ff-only', tag])
 		sp.succeed()
 
@@ -96,37 +71,20 @@ ns.handler = argv => {
 		yield git.checkout('develop')
 		sp.succeed()
 
-		sp.start('peristing develop branch changes remotely…')
-		yield git.push('origin', 'develop')
-		sp.succeed()
-
-		sp.start('releasing on GitHub…')
-		try {
-			yield conventionalGitHubReleaser(argv)
-		} catch (err) {
-			sp.fail().stop()
-			log.error(err)
-			process.exit()
-		}
+		sp.start('peristing all branch changes remotely…')
+		yield git.raw(['push', '--all'])
 		sp.succeed()
 
 		// TODO remove pre-release assests if relevant id:0 gh:2 ic:gh
 		if (branchType) {
 		}
 
-		sp.start('releasing on NPM…')
-		if (!argv.gitonly) {
-			try {
-				yield execa('npm', ['publish', '--tag=latest'], {
-					localDir: yield installedPath()
-				})
-			} catch (err) {
-				sp.fail().stop()
-				log.error(err)
-				process.exit()
-			}
-			sp.succeed()
+		// Release
+		if (!argv['no-release']) {
+			if (!argv['no-npm']) yield common.releaseNPM(['publish', '--tag=latest'])
+			if (!argv['no-github']) yield common.releaseGitHub(argv)
 		}
+
 		sp.stop()
 	}).catch(log.debug)
 }

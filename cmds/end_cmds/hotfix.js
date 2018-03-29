@@ -1,6 +1,5 @@
 const co = require('co')
 const debug = require('debug')('of:endHotFix')
-const execa = require('execa')
 const git = require('simple-git/promise')(process.cwd())
 const readPkg = require('read-pkg')
 
@@ -19,26 +18,17 @@ ns.builder = yargs => {
 }
 ns.handler = argv => {
 	co(function*() {
-		sp.start('checking HotFix branch exists…')
-		const branches = yield git.branch()
-		let hotfixBranch
-		const checkHotFix = yield branches.all.map(
-			co.wrap(function*(branch) {
-				if (branch.startsWith('hotfix')) {
-					debug(branch)
-					hotfixBranch = branch
-					yield git.checkout(branch)
-					return true
-				}
-				return false
-			})
-		)
-		if (!checkHotFix.includes(true)) {
-			sp.fail().stop()
-			log.error("HotFix branch doesn't exist")
+		const branchExists = yield common.searchCheckoutBranch('hotfix')
+
+		if (!branchExists && !argv.resume) {
+			sp
+				.start()
+				.fail(
+					"No HotFix Branches Available… did you mean to run 'oneflow new hotfix'"
+				)
+				.stop()
 			process.exit()
 		}
-		sp.succeed()
 
 		yield isCleanWorkDir(git)
 
@@ -52,37 +42,34 @@ ns.handler = argv => {
 				"HotFix 'must' be SemVer 'Patch' type, changelog detected 'Major/Minor'"
 			)
 			process.exit()
-			// migrate branch to next major version
 		}
 		sp.succeed()
 
-		if (!argv.resume) {
-			debug(
-				'standard-version',
-				yield execa('standard-version', ['--releaseAs=patch'], {
-					localDir: yield installedPath()
-				})
-			)
-		}
+		debug('argv.resume', argv.resume)
+		if (!argv.resume) yield common.standardVersion(['--releaseAs=patch'])
 
 		// --resume=true
+		yield common.checkoutBranch('develop')
+
 		const pkg = yield readPkg(process.cwd())
 		const tag = 'v' + pkg.version
-		sp.start('checking out develop…')
-		yield git.checkout('develop')
-		sp.succeed()
 
-		sp.start('merging ' + hotfixBranch + ' into develop…')
+		sp.start(`merging ${tag} into develop…`)
 		try {
 			yield git.mergeFromTo(tag, 'develop')
 		} catch (err) {
 			sp.fail().stop()
-			log.error(
-				'Resolve Merge Conflict and run command again with --resume --branch-name ' +
-					hotfixBranch
-			)
+			log.error('Resolve Merge Conflict and run command again with --resume')
 			process.exit()
 		}
+		sp.succeed()
+
+		sp.start('checking out master branch…')
+		yield git.checkout('master')
+		sp.succeed()
+
+		sp.start(`merging master from ${tag} …`)
+		yield git.merge(['--ff-only', tag])
 		sp.succeed()
 
 		sp.start('deleting local branch…')
@@ -93,14 +80,6 @@ ns.handler = argv => {
 		yield git.push('origin', ':' + hotfixBranch)
 		sp.succeed()
 
-		sp.start('checking out master branch…')
-		yield git.checkout('master')
-		sp.succeed()
-
-		sp.start('merging master from ' + tag + '…')
-		yield git.merge(['--ff-only', tag])
-		sp.succeed()
-
 		sp.start('checking out develop branch…')
 		yield git.checkout('develop')
 		sp.succeed()
@@ -109,30 +88,10 @@ ns.handler = argv => {
 		yield git.raw(['push', '--all'])
 		sp.succeed()
 
-		try {
-			sp.start('releasing on GitHub…')
-			yield git.checkout(hotfixBranch)
-			yield conventionalGitHubReleaser(argv)
-			yield git.checkout('develop')
-		} catch (err) {
-			sp.fail().stop()
-			log.error(err)
-			process.exit()
-		}
-		sp.succeed()
-
-		if (!argv.gitonly) {
-			try {
-				sp.start('releasing on NPM…')
-				yield execa('npm', ['publish', '--tag=latest'], {
-					localDir: yield installedPath()
-				})
-				sp.succeed()
-			} catch (err) {
-				sp.fail().stop()
-				log.error(err)
-				process.exit()
-			}
+		// Release
+		if (!argv['no-release']) {
+			if (!argv['no-npm']) yield common.releaseNPM(['publish', '--tag=latest'])
+			if (!argv['no-github']) yield common.releaseGitHub(argv)
 		}
 
 		sp.stop()

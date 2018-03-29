@@ -1,5 +1,7 @@
 const debug = require('debug')('of:start')
 const co = require('co')
+require('rooty')()
+
 const ns = {}
 
 process.on('unhandledRejection', (reason, p) => {
@@ -8,7 +10,7 @@ process.on('unhandledRejection', (reason, p) => {
 	process.exit()
 })
 
-ns.command = 'start <type> <branch-name> [gitonly]'
+ns.command = 'start <type> <branch-name> [no-release] [no-github] [no-npm]'
 ns.aliases = ['new', 'begin', 'n']
 ns.desc =
 	"Create & Checkout a new branch of <type> from current 'develop' branch"
@@ -16,9 +18,17 @@ ns.builder = yargs => {
 	return yargs
 		.commandDir('start_cmds')
 		.options({
-			gitonly: {desc: 'GitHub only Releases (No NPM)', type: 'boolean'}
+			'no-release': {
+				desc: "Don't Release to any publish endpoints",
+				type: 'boolean'
+			},
+			'no-github': {
+				desc: 'Disable GitHub Release',
+				type: 'boolean'
+			},
+			'no-npm': {desc: 'Disable NPM Release', type: 'boolean'}
 		})
-		.boolean('gitonly')
+		.boolean(['no-release', 'github', 'npm'])
 }
 ns.handler = function(argv) {}
 

@@ -1,6 +1,8 @@
 const co = require('co')
+const common = require('^lib/common')
 const debug = require('debug')('of:hotfix')
 const git = require('simple-git/promise')(process.cwd())
+
 const ns = {}
 
 ns.command = 'hotfix'
@@ -10,21 +12,20 @@ ns.desc =
 ns.builder = yargs => {}
 ns.handler = argv => {
 	co(function*() {
-		sp.start("checking HotFix branch doesn't exist…")
-		const branches = yield git.branch()
-		yield branches.all.map(
-			co.wrap(function*(branch) {
-				if (branch.match(/hotfix/) !== null) {
-					debug(branch)
-					yield git.checkout(branch)
-					sp.fail().stop()
-					log.error('HotFix branch already exists, switching to it')
-					process.exit()
-				}
-				return true
-			})
-		)
+		const noCreateDevelop = yield common.ensureDevelop(false)
+		if (!noCreateDevelop) {
+			sp
+				.start()
+				.fail(
+					'Develop branch must already exist and have completed a release onto master branch before a HotFix can be done'
+				)
+				.stop()
+			process.exit()
+		}
 
+		if (yield common.searchCheckoutBranch('hotfix')) process.exit()
+
+		// HotFix branch doesn't exist, create it
 		sp.start('checking out master')
 		yield git.checkout('master')
 		sp.succeed()
@@ -49,13 +50,9 @@ ns.handler = argv => {
 
 		let branchName = 'hotfix/' + bumpTag
 
-		sp.start('creating ' + branchName + '…')
-		yield git.checkoutBranch(branchName, tagLatest)
-		sp.succeed()
+		yield common.createBranch(branchName, tagLatest)
 
-		sp.start('syncing HotFix branch remotely…')
-		yield git.push(['-u', 'origin', branchName])
-		sp.succeed().stop()
+		sp.stop()
 	}).catch(log.debug)
 }
 

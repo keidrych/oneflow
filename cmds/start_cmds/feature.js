@@ -1,6 +1,6 @@
 const co = require('co')
-const debug = require('debug')('of:feature')
-const git = require('simple-git/promise')(process.cwd())
+const common = require('^lib/common')
+
 const ns = {}
 
 ns.command = 'feature <branch-name>'
@@ -19,22 +19,11 @@ ns.handler = argv => {
 	}
 
 	co(function*() {
-		const branches = yield git.branch()
-		// create develop from master if doesn't exist in repo
-		if (!branches.all.includes('develop')) {
-			sp.start("Develop doesn't exist, creating…")
-			yield git.checkoutBranch('develop', 'master')
-			yield git.push(['-u', 'origin', 'develop'])
-			sp.succeed()
-		}
+		yield common.ensureDevelop()
 
-		sp.start('creating ' + branch + '…')
-		yield git.checkoutBranch(branch, 'develop')
-		sp.succeed()
+		yield common.createBranch(branch, 'develop')
 
-		sp.start('persisting branch remotely')
-		yield git.push(['-u', 'origin', branch])
-		sp.succeed().stop()
+		sp.stop()
 	}).catch(log.error)
 }
 
