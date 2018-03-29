@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.7.0"></a>
+# [0.7.0](https://github.com/TayloredTechnology/oneflow/compare/v0.6.2...v0.7.0) (2018-03-29)
+
+
+### Bug Fixes
+
+* **documentation:** add the initial README ([1aaa881](https://github.com/TayloredTechnology/oneflow/commit/1aaa881))
+* enable execa to run when installed as a global module ([5a07f60](https://github.com/TayloredTechnology/oneflow/commit/5a07f60))
+* **trunk:** add missing require ([3d0abf8](https://github.com/TayloredTechnology/oneflow/commit/3d0abf8))
+
+
+### Features
+
+* **trunk:** enable trunk based operation ([4a86e05](https://github.com/TayloredTechnology/oneflow/commit/4a86e05))
+
+
+
 <a name="0.6.3"></a>
 ## [0.6.3](https://github.com/TayloredTechnology/oneflow/compare/v0.6.2...v0.6.3) (2018-03-19)
 
