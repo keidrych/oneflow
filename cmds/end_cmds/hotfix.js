@@ -59,7 +59,9 @@ ns.handler = argv => {
 		if (!argv.resume) {
 			debug(
 				'standard-version',
-				yield execa('standard-version', ['--releaseAs=patch'])
+				yield execa('standard-version', ['--releaseAs=patch'], {
+					localDir: yield installedPath()
+				})
 			)
 		}
 
@@ -83,30 +85,6 @@ ns.handler = argv => {
 		}
 		sp.succeed()
 
-		try {
-			sp.start('releasing on GitHub…')
-			yield git.checkout(hotfixBranch)
-			yield conventionalGitHubReleaser(argv)
-			yield git.checkout('develop')
-		} catch (err) {
-			sp.fail().stop()
-			log.error(err)
-			process.exit()
-		}
-		sp.succeed()
-
-		if (!argv.gitonly) {
-			try {
-				sp.start('releasing on NPM…')
-				yield execa('npm', ['publish', '--tag=latest'])
-				sp.succeed()
-			} catch (err) {
-				sp.fail().stop()
-				log.error(err)
-				process.exit()
-			}
-		}
-
 		sp.start('deleting local branch…')
 		yield git.raw(['branch', '-D', hotfixBranch])
 		sp.succeed()
@@ -129,7 +107,35 @@ ns.handler = argv => {
 
 		sp.start('peristing all branch changes remotely…')
 		yield git.raw(['push', '--all'])
-		sp.succeed().stop()
+		sp.succeed()
+
+		try {
+			sp.start('releasing on GitHub…')
+			yield git.checkout(hotfixBranch)
+			yield conventionalGitHubReleaser(argv)
+			yield git.checkout('develop')
+		} catch (err) {
+			sp.fail().stop()
+			log.error(err)
+			process.exit()
+		}
+		sp.succeed()
+
+		if (!argv.gitonly) {
+			try {
+				sp.start('releasing on NPM…')
+				yield execa('npm', ['publish', '--tag=latest'], {
+					localDir: yield installedPath()
+				})
+				sp.succeed()
+			} catch (err) {
+				sp.fail().stop()
+				log.error(err)
+				process.exit()
+			}
+		}
+
+		sp.stop()
 	}).catch(log.debug)
 }
 

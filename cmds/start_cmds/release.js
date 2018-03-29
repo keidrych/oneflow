@@ -79,7 +79,16 @@ ns.handler = argv => {
 				break
 			default:
 		}
-		debug('standard-version', yield execa('standard-version', svArgs))
+		try {
+			debug(
+				'standard-version',
+				yield execa('standard-version', svArgs, {
+					localDir: yield installedPath()
+				})
+			)
+		} catch (err) {
+			log.error(err)
+		}
 		if (argv.pre !== 'official' && !argv.gitonly) {
 			try {
 				sp.start('creating NPM pre-release of type ' + argv.pre + '…')

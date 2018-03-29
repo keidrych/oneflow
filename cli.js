@@ -48,6 +48,22 @@ global.isCleanWorkDir = co.wrap(function*(git) {
 	global.sp.succeed()
 })
 
+const {getInstalledPath} = require('get-installed-path')
+
+global.installedPath = co.wrap(function*() {
+	let retVal
+	try {
+		retVal = yield getInstalledPath('@tayloredtechnology/oneflow', {
+			local: false
+		})
+	} catch (err) {
+		retVal = yield getInstalledPath('@tayloredtechnology/oneflow', {
+			local: true
+		})
+	}
+	return retVal + '/node_modules/.bin/'
+})
+
 const cgh = require('conventional-github-releaser')
 
 global.conventionalGitHubReleaser = (argv, isDraft = false) =>

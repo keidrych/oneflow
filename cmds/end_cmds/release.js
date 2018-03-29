@@ -51,8 +51,11 @@ ns.handler = argv => {
 		debug('branchType', branchType)
 		debug('argv.resume', argv.resume)
 		debug('argv.gitonly', argv.gitonly)
-		if (!argv.resume) debug('standard-version', yield execa('standard-version'))
-
+		if (!argv.resume)
+			debug(
+				'standard-version',
+				yield execa('standard-version', [''], {localDir: yield installedPath()})
+			)
 		const pkg = yield readPkg(process.cwd())
 		const tag = 'v' + pkg.version
 		// --resume=true
@@ -72,32 +75,6 @@ ns.handler = argv => {
 			process.exit()
 		}
 		sp.succeed()
-
-		sp.start('releasing on GitHub…')
-		try {
-			yield conventionalGitHubReleaser(argv)
-		} catch (err) {
-			sp.fail().stop()
-			log.error(err)
-			process.exit()
-		}
-		sp.succeed()
-
-		// TODO remove pre-release assests if relevant id:0 gh:2 ic:gh
-		if (branchType) {
-		}
-
-		sp.start('releasing on NPM…')
-		if (!argv.gitonly) {
-			try {
-				yield execa('npm', ['publish', '--tag=latest'])
-			} catch (err) {
-				sp.fail().stop()
-				log.error(err)
-				process.exit()
-			}
-			sp.succeed()
-		}
 
 		sp.start('deleting local branch…')
 		yield git.raw(['branch', '-D', branch])
@@ -121,7 +98,36 @@ ns.handler = argv => {
 
 		sp.start('peristing develop branch changes remotely…')
 		yield git.push('origin', 'develop')
-		sp.succeed().stop()
+		sp.succeed()
+
+		sp.start('releasing on GitHub…')
+		try {
+			yield conventionalGitHubReleaser(argv)
+		} catch (err) {
+			sp.fail().stop()
+			log.error(err)
+			process.exit()
+		}
+		sp.succeed()
+
+		// TODO remove pre-release assests if relevant id:0 gh:2 ic:gh
+		if (branchType) {
+		}
+
+		sp.start('releasing on NPM…')
+		if (!argv.gitonly) {
+			try {
+				yield execa('npm', ['publish', '--tag=latest'], {
+					localDir: yield installedPath()
+				})
+			} catch (err) {
+				sp.fail().stop()
+				log.error(err)
+				process.exit()
+			}
+			sp.succeed()
+		}
+		sp.stop()
 	}).catch(log.debug)
 }
 
