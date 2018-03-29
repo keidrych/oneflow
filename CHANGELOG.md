@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.0.1"></a>
+## [1.0.1](https://github.com/TayloredTechnology/oneflow/compare/v0.7.0...v1.0.1) (2018-03-29)
+
+
+### Bug Fixes
+
+* re-linking promise chains ([3aafafb](https://github.com/TayloredTechnology/oneflow/commit/3aafafb))
+
+
+
 <a name="0.7.0"></a>
 # [0.7.0](https://github.com/TayloredTechnology/oneflow/compare/v0.6.2...v0.7.0) (2018-03-29)
 
