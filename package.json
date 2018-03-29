@@ -8,8 +8,8 @@
     "oneflow": "./cli.js"
   },
   "author": {
-    "email": "TayloredTechnology@protonmail.ch",
-    "name": "Taylored Technology"
+    "name": "Taylored Technology",
+    "email": "TayloredTechnology@protonmail.ch"
   },
   "repository": {
     "type": "git",
@@ -26,16 +26,24 @@
     "conventional-recommended-bump": "^2.0.6",
     "debug": "^3.1.0",
     "execa": "^0.10.0",
+    "fastest-validator": "^0.6.5",
     "get-installed-path": "^4.0.8",
+    "is-installed": "^2.0.1",
     "np": "^2.20.1",
     "ora": "^2.0.0",
+    "per-env": "^1.0.2",
     "pino": "^4.14.0",
     "pino-debug": "^1.1.1",
     "pkg-dir": "^2.0.0",
     "read-pkg": "^3.0.0",
+    "redrun": "^6.0.1",
     "rooty": "^2.0.0",
     "simple-git": "^1.92.0",
     "standard-version": "^4.3.0",
+    "tap-lochnest": "^1.1.2",
+    "tape": "^4.9.0",
+    "tape-around": "^2.2.0",
+    "tape-promise": "^3.0.0",
     "yargs": "^11.0.0"
   },
   "devDependencies": {
@@ -43,8 +51,18 @@
     "@commitlint/config-conventional": "^6.1.3",
     "@commitlint/lint": "^6.1.3",
     "@commitlint/prompt-cli": "^6.1.3",
-    "husky": "^0.14.3",
+    "chuhai": "^1.2.0",
+    "clear-require": "^2.0.0",
+    "codecov": "^3.0.0",
+    "faker": "^4.1.0",
+    "husky": "^0.15.0-rc.9",
+    "lint-staged": "^7.0.0",
+    "nyc": "^11.6.0",
     "prettier": "^1.11.1",
+    "tap-dot": "^1.0.5",
+    "tap-summary": "^4.0.0",
+    "tape-index": "^1.1.1",
+    "testdouble": "^3.6.0",
     "xo": "^0.20.3"
   },
   "scripts": {
@@ -52,7 +70,22 @@
     "commitmsg": "commitlint -e $GIT_PARAMS",
     "prerelease": "standard-version",
     "release": "conventional-github-releaser -p angular",
-    "postrelease": "npm publish --tag=latest"
+    "postrelease": "npm publish --tag=latest",
+    "test": "per-env",
+    "posttest": "redrun -p codecov:report codecov:check",
+    "test:api": "nyc --cache --per-file --silent tape '{,!(node_modules)/**/}*.?(api).js' | tap-dot",
+    "test:development": "nyc --cache --per-file --silent tape '{,!(node_modules)/**/}*.?(spec|sanity).js' | tap-dot",
+    "test:sanity": "nyc --cache --per-file --silent tape '{,!(node_modules)/**/}*.?(sanity).js' | tap-dot",
+    "test:ci": "nyc --cache --per-file --silent tape '{,!(node_modules)/**/}*.?(spec|sanity|api).js' | tap-dot",
+    "posttest:ci": "redrun -p codecov:*",
+    "codecov:check": "nyc check-coverage --branches=50 --functions=50 --lines=90 --statements=50",
+    "codecov:generate": "nyc report --reporter=text-lcov > coverage.lcov",
+    "codecov:report": "nyc report --reporter=text",
+    "codecov:upload": "codecov -t ",
+    "prestart:production": "tape '{,!(node_modules)/**/}*.?(sanity|api).js' | tap-dot",
+    "format": "redrun -p format:*",
+    "format:prettier": "prettier --write '**/*.{format:*}'",
+    "format:xo": "xo ./**/*.js"
   },
   "license": "SEE LICENSE IN LICENSE",
   "commitlint": {
@@ -64,25 +97,47 @@
     "globals": [
       "sp",
       "log",
-      "isCleanWorkDir"
+      "isCleanWorkDir",
+      "_"
     ],
     "prettier": true,
     "rules": {
-      "generator-star-spacing": "off",
-      "import/no-extraneous-dependencies": "off",
-      "import/no-unassigned-import": "off",
       "import/no-unresolved": "off",
       "import/order": "off",
-      "new-cap": [
-        {
-          "newIsCap": true,
-          "capIsNew": true,
-          "capIsNewExceptions": []
-        },
-        "error"
-      ],
+      "import/no-extraneous-dependencies": "off",
+      "import/no-unassigned-import": "off",
+      "generator-star-spacing": "off",
       "operator-linebreak": "off"
     },
-    "semicolon": false
+    "semicolon": false,
+    "ignores": [
+      "**/*.spec.js",
+      "**/*.test.js",
+      "app/backends/**/*.js"
+    ]
+  },
+  "engines": {
+    "node": ">=6"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -e $GIT_PARAMS"
+    }
+  },
+  "lint-staged": {
+    "linters": {
+      "*.{js}": "xo",
+      "*.{css,md}": [
+        "prettier --write",
+        "git add"
+      ],
+      "*.{spec,sanity,api}.js": [
+        "nyc --per-file --check-coverage --branches=50 --functions=50 --lines=90 --statements=50 tape"
+      ]
+    },
+    "ignore": [
+      "CHANGELOG.md"
+    ]
   }
 }
