@@ -36,6 +36,10 @@ ns.handler = argv => {
 
 		yield common.syncMaster(tag)
 
+		sp.start('peristing all branch changes remotely…')
+		yield git.raw(['push', 'develop', 'master'])
+		sp.succeed()
+
 		// Release
 		if (!argv['no-release']) {
 			if (!argv['no-npm']) yield common.releaseNPM(['publish', '--tag=latest'])
