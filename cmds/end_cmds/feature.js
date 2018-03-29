@@ -32,6 +32,9 @@ ns.handler = argv => {
 
 		yield isCleanWorkDir(git)
 
+		let branchName = yield git.branch()
+		branchName = branchName.current
+
 		sp.start(`attempting to rebase ${branch} from develop…`)
 		try {
 			yield git.rebase(['develop'])
@@ -47,20 +50,17 @@ ns.handler = argv => {
 		yield git.checkout('develop')
 		sp.succeed()
 
-		sp.start('merging ' + branch + ' into develop…')
-		yield git.merge(['--no-ff', branch])
+		sp.start(`merging ${branchName} into develop…`)
+		yield git.merge(['--no-ff', branchName])
 		sp.succeed()
 
-		sp.start('deleting local branch…')
-		yield git.raw(['branch', '-D', branch])
-		sp.succeed()
-
-		sp.start('deleting remote branch…')
-		yield git.push('origin', ':' + branch)
+		yield common.purgeBranch(branchName)
 
 		sp.start('persisting develop remotely')
 		yield git.push('origin', 'develop')
-		sp.succeed().stop()
+		sp.succeed()
+
+		sp.stop()
 	}).catch(log.error)
 }
 
