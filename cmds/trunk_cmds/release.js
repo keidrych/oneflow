@@ -32,6 +32,7 @@ ns.handler = argv => {
 
 		const pkg = yield readPkg(process.cwd())
 		const tag = 'v' + pkg.version
+		debug('tag', tag)
 
 		yield common.syncMaster(tag)
 
