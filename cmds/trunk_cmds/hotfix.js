@@ -73,7 +73,7 @@ ns.handler = argv => {
 			yield common.purgeBranch(branchName)
 
 			sp.start('peristing all branch changes remotely…')
-			yield git.raw(['push', 'develop', 'master'])
+			yield git.raw(['push', 'origin', 'develop', 'master'])
 			sp.succeed()
 
 			// Release
