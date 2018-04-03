@@ -41,9 +41,9 @@ ns.handler = argv => {
 		sp.succeed()
 
 		// Release
-		if (!argv['no-release']) {
-			if (!argv['no-npm']) yield common.releaseNPM(['publish', '--tag=latest'])
-			if (!argv['no-github']) yield common.releaseGitHub(argv, tag)
+		if (argv.publish) {
+			if (argv.npm) yield common.releaseNPM(['publish', '--tag=latest'])
+			if (argv.github) yield common.releaseGitHub(argv, tag)
 		}
 
 		sp.stop()

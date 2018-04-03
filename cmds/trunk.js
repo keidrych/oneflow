@@ -10,25 +10,24 @@ process.on('unhandledRejection', (reason, p) => {
 	process.exit()
 })
 
-ns.command = 'trunk <type> [no-release] [no-github] [no-npm]'
+ns.command = 'trunk <type> [publish] [github] [npm]'
 ns.aliases = ['t']
 ns.desc =
 	'Trunk based development branch of GitFlow, releases cut from latest commit, hotfixes auto detect and close, features are assumed to be tracked via GIT commit logs'
 ns.builder = yargs => {
-	return yargs
-		.commandDir('trunk_cmds')
-		.options({
-			'no-release': {
-				desc: "Don't Release to any publish endpoints",
-				type: 'boolean'
-			},
-			'no-github': {
-				desc: 'Disable GitHub Release',
-				type: 'boolean'
-			},
-			'no-npm': {desc: 'Disable NPM Release', type: 'boolean'}
-		})
-		.boolean(['no-release', 'no-github', 'no-npm'])
+	return yargs.commandDir('trunk_cmds').options({
+		publish: {
+			desc: "Don't Release to any publish endpoints",
+			type: 'boolean',
+			default: true
+		},
+		github: {
+			desc: 'Disable GitHub Release',
+			type: 'boolean',
+			default: true
+		},
+		npm: {desc: 'Disable NPM Release', type: 'boolean', default: true}
+	})
 }
 ns.handler = function(argv) {}
 

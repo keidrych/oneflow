@@ -97,7 +97,7 @@ ns.handler = argv => {
 		debug('branchName', branchName)
 		debug('tag', tag)
 		if (noCreateBranch) {
-			// rename branch to new release version and release: github-releaser prioritizes branch name for releases
+			// Rename branch to new release version and release: github-releaser prioritizes branch name for releases
 			debug('preBranch', preBranch)
 			sp.start('rename branch to new release version')
 			yield git.raw(['branch', '-m', branchName])
@@ -113,9 +113,9 @@ ns.handler = argv => {
 		sp.succeed()
 
 		// Release
-		if (!argv['no-release']) {
-			if (!argv['no-npm']) yield common.releaseNPM(npArgs)
-			if (!argv['no-github']) yield common.releaseGitHub(argv, draftRelease)
+		if (argv.release) {
+			if (argv.npm) yield common.releaseNPM(npArgs)
+			if (argv.github) yield common.releaseGitHub(argv, draftRelease)
 		}
 
 		sp.stop()

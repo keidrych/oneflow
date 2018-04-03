@@ -10,25 +10,24 @@ process.on('unhandledRejection', (reason, p) => {
 	process.exit()
 })
 
-ns.command = 'end <type> [no-release] [no-github] [no-npm]'
+ns.command = 'end <type> [release] [github] [npm]'
 ns.aliases = ['stop', 'close', 'merge', 'c', 'e']
 ns.desc =
 	'Merge & Delete a branch of <type> following Option#3 in OneFlow. Autovalidaes release number and increments if necessary'
 ns.builder = yargs => {
-	return yargs
-		.commandDir('end_cmds')
-		.options({
-			'no-release': {
-				desc: "Don't Release to any publish endpoints",
-				type: 'boolean'
-			},
-			'no-github': {
-				desc: 'Disable GitHub Release',
-				type: 'boolean'
-			},
-			'no-npm': {desc: 'Disable NPM Release', type: 'boolean'}
-		})
-		.boolean(['resume', 'no-release', 'github', 'npm'])
+	return yargs.commandDir('end_cmds').options({
+		release: {
+			desc: "Don't Release to any publish endpoints",
+			type: 'boolean',
+			default: true
+		},
+		github: {
+			desc: 'Disable GitHub Release',
+			type: 'boolean',
+			default: true
+		},
+		npm: {desc: 'Disable NPM Release', type: 'boolean', default: true}
+	})
 }
 ns.handler = function(argv) {}
 

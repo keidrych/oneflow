@@ -4,7 +4,7 @@ const git = require('simple-git/promise')(process.cwd())
 
 const ns = {}
 
-ns.command = 'hotfix'
+ns.command = 'hotfix [resume]'
 ns.aliases = ['hot-fix', 'fix', 'h']
 ns.desc = "Automanage HotFix branch, based on latest tag in 'master'"
 ns.builder = yargs => {
@@ -77,10 +77,9 @@ ns.handler = argv => {
 			sp.succeed()
 
 			// Release
-			if (!argv['no-release']) {
-				if (!argv['no-npm'])
-					yield common.releaseNPM(['publish', '--tag=latest'])
-				if (!argv['no-github']) yield common.releaseGitHub(argv, tag)
+			if (argv.publish) {
+				if (argv.npm) yield common.releaseNPM(['publish', '--tag=latest'])
+				if (argv.github) yield common.releaseGitHub(argv, tag)
 			}
 		} else {
 			sp.start('checking out master')

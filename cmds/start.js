@@ -10,25 +10,24 @@ process.on('unhandledRejection', (reason, p) => {
 	process.exit()
 })
 
-ns.command = 'start <type> <branch-name> [no-release] [no-github] [no-npm]'
+ns.command = 'start <type> <branch-name> [release] [github] [npm]'
 ns.aliases = ['new', 'begin', 'n']
 ns.desc =
 	"Create & Checkout a new branch of <type> from current 'develop' branch"
 ns.builder = yargs => {
-	return yargs
-		.commandDir('start_cmds')
-		.options({
-			'no-release': {
-				desc: "Don't Release to any publish endpoints",
-				type: 'boolean'
-			},
-			'no-github': {
-				desc: 'Disable GitHub Release',
-				type: 'boolean'
-			},
-			'no-npm': {desc: 'Disable NPM Release', type: 'boolean'}
-		})
-		.boolean(['no-release', 'github', 'npm'])
+	return yargs.commandDir('start_cmds').options({
+		release: {
+			desc: "Don't Release to any publish endpoints",
+			type: 'boolean',
+			default: true
+		},
+		github: {
+			desc: 'Disable GitHub Release',
+			type: 'boolean',
+			default: true
+		},
+		npm: {desc: 'Disable NPM Release', type: 'boolean', default: true}
+	})
 }
 ns.handler = function(argv) {}
 
