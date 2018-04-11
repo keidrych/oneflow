@@ -35,7 +35,7 @@ ns.handler = argv => {
 		let branchName = yield git.branch()
 		branchName = branchName.current
 
-		sp.start(`attempting to rebase ${branch} from develop…`)
+		sp.start(`attempting to rebase ${branchName} from develop…`)
 		try {
 			yield git.rebase(['develop'])
 		} catch (err) {

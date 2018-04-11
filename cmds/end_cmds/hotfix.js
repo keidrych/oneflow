@@ -34,9 +34,8 @@ ns.handler = argv => {
 		let branchName = yield git.branch()
 		branchName = branchName.current
 
-		let bump
 		sp.start("checking release notes to ensure SemVer 'patch' bump only…")
-		bump = yield global.getConventionalRecommendedBump('angular')
+		const bump = yield global.getConventionalRecommendedBump('angular')
 		debug('bump', bump)
 		if (bump.match(/major|minor/)) {
 			sp.fail().stop()
@@ -64,7 +63,7 @@ ns.handler = argv => {
 		// Release
 		if (argv.release) {
 			if (argv.npm) yield common.releaseNPM(['publish', '--tag=latest'])
-			if (arg.github) yield common.releaseGitHub(argv, tag)
+			if (argv.github) yield common.releaseGitHub(argv, tag)
 		}
 
 		sp.stop()

@@ -48,9 +48,8 @@ ns.handler = argv => {
 			let branchName = yield git.branch()
 			branchName = branchName.current
 
-			let bump
 			sp.start("checking release notes to ensure SemVer 'patch' bump only…")
-			bump = yield global.getConventionalRecommendedBump('angular')
+			const bump = yield global.getConventionalRecommendedBump('angular')
 			debug('bump', bump)
 			if (bump.match(/major|minor/)) {
 				sp.fail().stop()
@@ -58,7 +57,7 @@ ns.handler = argv => {
 					"HotFix 'must' be SemVer 'Patch' type, changelog detected 'Major/Minor'"
 				)
 				process.exit()
-				// migrate branch to next major version
+				// Migrate branch to next major version
 			}
 			sp.succeed()
 
@@ -88,6 +87,7 @@ ns.handler = argv => {
 
 			sp.start('checking for prior release tag…')
 			const tags = yield git.tags()
+			let tagLatest
 			try {
 				tagLatest = yield git.raw(['describe', '--tags'])
 			} catch (err) {
@@ -98,13 +98,13 @@ ns.handler = argv => {
 			tagLatest = tagLatest.replace(/\n/, '')
 			sp.succeed()
 
-			bumpTag = tagLatest.split('.')
+			let bumpTag = tagLatest.split('.')
 			debug('bumpTag', bumpTag)
 			bumpTag[2] = Number(bumpTag[2]) + 1
 			bumpTag = bumpTag.join('.')
 			debug('bumpTag', bumpTag)
 
-			let branchName = 'hotfix/' + bumpTag
+			const branchName = 'hotfix/' + bumpTag
 
 			yield common.createBranch(branchName, tagLatest)
 		}

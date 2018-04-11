@@ -49,8 +49,6 @@ ns.handler = argv => {
 		sp.succeed()
 
 		// TODO remove pre-release assests if relevant id:0 gh:2 ic:gh
-		if (branchType) {
-		}
 
 		// Release
 		if (argv.release) {

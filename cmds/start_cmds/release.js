@@ -39,11 +39,13 @@ ns.handler = argv => {
 			process.exit()
 		}
 
+		const branches = yield git.branch()
+		let branchType
 		if (!argv.pre) {
 			sp.start(
 				"'pre' not provided… checking if current branch is a pre-release type…"
 			)
-			let branchType = branches.current.match(/alpha|beta|rc/)
+			branchType = branches.current.match(/alpha|beta|rc/)
 			branchType = branchType ? branchType[0] : false
 			if (branchType) {
 				sp.succeed(`'pre' assigned to type '${branchType}'`)
