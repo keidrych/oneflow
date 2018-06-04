@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "co": "4.6.0",
-    "conventional-changelog-angular": "1.6.6",
+    "conventional-changelog-angular": "4.0.1",
     "conventional-changelog-cli": "1.3.22",
     "conventional-github-releaser": "2.0.2",
     "conventional-recommended-bump": "2.0.9",
