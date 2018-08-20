@@ -25,7 +25,7 @@
     "conventional-github-releaser": "2.0.2",
     "conventional-recommended-bump": "2.0.9",
     "debug": "3.1.0",
-    "execa": "0.10.0",
+    "execa": "0.11.0",
     "fastest-validator": "0.6.10",
     "get-installed-path": "4.0.8",
     "is-installed": "2.0.1",
