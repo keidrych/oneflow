@@ -63,7 +63,7 @@
     "tap-summary": "4.0.0",
     "tape-index": "1.1.1",
     "testdouble": "3.9.3",
-    "xo": "0.23.0"
+    "xo": "0.24.0"
   },
   "scripts": {
     "commit": "commit",
