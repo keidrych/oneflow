@@ -61,7 +61,7 @@
     "prettier": "1.16.1",
     "tap-dot": "1.0.5",
     "tap-summary": "4.0.0",
-    "tape-index": "1.1.1",
+    "tape-index": "2.0.0",
     "testdouble": "3.9.3",
     "xo": "0.24.0"
   },
