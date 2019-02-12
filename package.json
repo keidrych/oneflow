@@ -35,7 +35,7 @@
     "pino": "4.17.6",
     "pino-debug": "1.2.0",
     "pkg-dir": "2.0.0",
-    "read-pkg": "3.0.0",
+    "read-pkg": "4.0.1",
     "redrun": "6.0.7",
     "rooty": "2.0.0",
     "simple-git": "1.107.0",
