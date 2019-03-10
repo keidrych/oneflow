@@ -62,7 +62,7 @@
     "tap-dot": "1.0.5",
     "tap-summary": "4.0.0",
     "tape-index": "1.1.1",
-    "testdouble": "3.10.0",
+    "testdouble": "3.11.0",
     "xo": "0.24.0"
   },
   "scripts": {
