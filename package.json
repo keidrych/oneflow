@@ -29,7 +29,7 @@
     "fastest-validator": "0.6.17",
     "get-installed-path": "4.0.8",
     "is-installed": "2.0.1",
-    "np": "2.20.1",
+    "np": "5.2.1",
     "ora": "2.1.0",
     "per-env": "1.0.2",
     "pino": "4.17.6",
