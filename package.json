@@ -36,15 +36,15 @@
     "pino-debug": "1.3.0",
     "pkg-dir": "2.0.0",
     "read-pkg": "3.0.0",
-    "redrun": "6.0.7",
+    "redrun": "7.1.4",
     "rooty": "2.0.0",
     "simple-git": "1.117.0",
-    "standard-version": "4.4.0",
+    "standard-version": "6.0.0",
     "tap-lochnest": "1.1.2",
     "tape": "4.11.0",
     "tape-around": "2.2.0",
     "tape-promise": "3.0.0",
-    "yargs": "11.1.0"
+    "yargs": "13.1.0"
   },
   "devDependencies": {
     "@commitlint/cli": "6.2.0",
