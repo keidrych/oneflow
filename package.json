@@ -44,7 +44,7 @@
     "tape": "4.11.0",
     "tape-around": "2.2.0",
     "tape-promise": "3.0.0",
-    "yargs": "11.1.0"
+    "yargs": "16.0.0"
   },
   "devDependencies": {
     "@commitlint/cli": "6.2.0",
