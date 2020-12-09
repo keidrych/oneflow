@@ -41,7 +41,7 @@
     "simple-git": "1.117.0",
     "standard-version": "4.4.0",
     "tap-lochnest": "1.1.2",
-    "tape": "4.11.0",
+    "tape": "4.13.3",
     "tape-around": "2.2.0",
     "tape-promise": "3.0.0",
     "yargs": "11.1.0"
