@@ -26,7 +26,7 @@
     "conventional-recommended-bump": "2.0.9",
     "debug": "3.2.6",
     "execa": "0.11.0",
-    "fastest-validator": "0.6.17",
+    "fastest-validator": "0.6.19",
     "get-installed-path": "4.0.8",
     "is-installed": "2.0.1",
     "np": "2.20.1",
