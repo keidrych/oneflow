@@ -29,7 +29,7 @@
     "fastest-validator": "0.6.17",
     "get-installed-path": "4.0.8",
     "is-installed": "2.0.1",
-    "np": "2.20.1",
+    "np": "6.0.0",
     "ora": "2.1.0",
     "per-env": "1.0.2",
     "pino": "4.17.6",
@@ -39,12 +39,12 @@
     "redrun": "6.0.7",
     "rooty": "2.0.0",
     "simple-git": "1.117.0",
-    "standard-version": "4.4.0",
+    "standard-version": "7.1.0",
     "tap-lochnest": "1.1.2",
     "tape": "4.11.0",
     "tape-around": "2.2.0",
     "tape-promise": "3.0.0",
-    "yargs": "11.1.0"
+    "yargs": "15.0.1"
   },
   "devDependencies": {
     "@commitlint/cli": "6.2.0",
